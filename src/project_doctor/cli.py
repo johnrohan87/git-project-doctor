@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from project_doctor.config import DEFAULT_OUTPUT_DIR
-from project_doctor.history import load_history, write_history_entry
+from project_doctor.history import latest_history_delta, load_history, write_history_entry
 from project_doctor.models import ProjectReport, RepoSummary
 from project_doctor.reporters.codex_context_reporter import write_codex_context
 from project_doctor.reporters.json_reporter import write_json_reports
@@ -245,10 +245,38 @@ def history_command(
     path: str = typer.Argument(..., help="Repository path to inspect history for."),
     history_dir: Path | None = typer.Option(None, "--history-dir", help="Directory containing scan history JSONL files."),
     limit: int = typer.Option(10, "--limit", "-n", min=1, help="Maximum history entries to show."),
+    diff: bool = typer.Option(False, "--diff", help="Show changes between the latest two scan history entries."),
 ) -> None:
     """Show local scan history for a repository."""
     repo_path = _validate_path(path)
     entries = load_history(repo_path, history_dir)
+    if diff:
+        delta = latest_history_delta(entries)
+        table = Table(title="Latest Scan Delta")
+        table.add_column("Field")
+        table.add_column("Change")
+        if not delta:
+            table.add_row("History", "Need at least two entries to compare")
+            console.print(table)
+            return
+        table.add_row("Previous scan", delta.previous_scanned_at)
+        table.add_row("Current scan", delta.current_scanned_at)
+        table.add_row("Health score", f"{delta.health_score_delta:+d}")
+        table.add_row("Documentation score", f"{delta.documentation_score_delta:+d}")
+        table.add_row("TODO count", f"{delta.todo_count_delta:+d}")
+        table.add_row("Possible secret count", f"{delta.possible_secret_count_delta:+d}")
+        table.add_row("Dependency file count", f"{delta.dependency_file_count_delta:+d}")
+        table.add_row("Test command count", f"{delta.test_command_count_delta:+d}")
+        table.add_row("CI workflow count", f"{delta.ci_workflow_count_delta:+d}")
+        table.add_row("Dirty changed", str(delta.dirty_changed))
+        table.add_row("Branch changed", str(delta.branch_changed))
+        table.add_row("Stack added", "\n".join(delta.stack_added) or "None")
+        table.add_row("Stack removed", "\n".join(delta.stack_removed) or "None")
+        table.add_row("New next steps", "\n".join(delta.new_recommended_next_steps) or "None")
+        table.add_row("Resolved next steps", "\n".join(delta.resolved_recommended_next_steps) or "None")
+        console.print(table)
+        return
+
     table = Table(title=f"Scan History ({len(entries)})")
     table.add_column("Scanned At")
     table.add_column("Health")

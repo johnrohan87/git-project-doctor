@@ -97,6 +97,24 @@ class ScanHistoryEntry(BaseModel):
     recommended_next_steps: list[str] = Field(default_factory=list)
 
 
+class ScanHistoryDelta(BaseModel):
+    previous_scanned_at: str
+    current_scanned_at: str
+    health_score_delta: int = 0
+    documentation_score_delta: int = 0
+    todo_count_delta: int = 0
+    possible_secret_count_delta: int = 0
+    dependency_file_count_delta: int = 0
+    test_command_count_delta: int = 0
+    ci_workflow_count_delta: int = 0
+    dirty_changed: bool = False
+    branch_changed: bool = False
+    stack_added: list[str] = Field(default_factory=list)
+    stack_removed: list[str] = Field(default_factory=list)
+    new_recommended_next_steps: list[str] = Field(default_factory=list)
+    resolved_recommended_next_steps: list[str] = Field(default_factory=list)
+
+
 class ProjectReport(BaseModel):
     summary: RepoSummary
     git: GitStatus

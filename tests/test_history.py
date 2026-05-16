@@ -6,7 +6,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from project_doctor.cli import app, build_report
-from project_doctor.history import build_history_entry, load_history, write_history_entry
+from project_doctor.history import build_history_entry, compare_history_entries, load_history, write_history_entry
 
 
 runner = CliRunner()
@@ -66,3 +66,39 @@ def test_scan_writes_history_and_history_command_displays_it(tmp_path):
     assert history_result.exit_code == 0
     assert "Scan History (1)" in history_result.output
     assert "repo" not in history_result.output
+
+
+def test_compare_history_entries_reports_deltas(tmp_path):
+    repo = _repo(tmp_path / "repo")
+    first = build_history_entry(build_report(repo))
+    first.scanned_at = "2026-05-16T10:00:00+00:00"
+    (repo / "app.py").write_text("# TODO: test history\n# FIXME: second item\n", encoding="utf-8")
+    (repo / "config.yml").write_text("API_KEY: real-value\n", encoding="utf-8")
+    second = build_history_entry(build_report(repo))
+    second.scanned_at = "2026-05-16T11:00:00+00:00"
+
+    delta = compare_history_entries(first, second)
+
+    assert delta.previous_scanned_at == "2026-05-16T10:00:00+00:00"
+    assert delta.current_scanned_at == "2026-05-16T11:00:00+00:00"
+    assert delta.todo_count_delta == 1
+    assert delta.possible_secret_count_delta == 1
+    assert delta.health_score_delta < 0
+
+
+def test_history_diff_command_displays_latest_delta(tmp_path):
+    repo = _repo(tmp_path / "repo")
+    out_dir = tmp_path / "reports"
+    history_dir = tmp_path / "history"
+
+    first_scan = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir), "--history-dir", str(history_dir)])
+    (repo / "app.py").write_text("# TODO: test history\n# FIXME: second item\n", encoding="utf-8")
+    second_scan = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir), "--history-dir", str(history_dir)])
+    diff_result = runner.invoke(app, ["history", str(repo), "--history-dir", str(history_dir), "--diff"])
+
+    assert first_scan.exit_code == 0
+    assert second_scan.exit_code == 0
+    assert diff_result.exit_code == 0
+    assert "Latest Scan Delta" in diff_result.output
+    assert "TODO count" in diff_result.output
+    assert "+1" in diff_result.output

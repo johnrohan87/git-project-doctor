@@ -98,6 +98,12 @@ Phase 2 begins with richer local documentation quality review while preserving r
 
 Use `--no-history` to skip history writes, or `--history-dir PATH` to choose a different local history directory.
 
+To compare the latest two scans:
+
+```bash
+project-doctor history PATH --diff
+```
+
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and unreleased changes.

@@ -5,7 +5,7 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from project_doctor.models import ProjectReport, ScanHistoryEntry
+from project_doctor.models import ProjectReport, ScanHistoryDelta, ScanHistoryEntry
 
 
 def default_history_dir() -> Path:
@@ -67,3 +67,34 @@ def load_history(repo_path: Path, history_dir: Path | None = None) -> list[ScanH
         except ValueError:
             continue
     return entries
+
+
+def compare_history_entries(previous: ScanHistoryEntry, current: ScanHistoryEntry) -> ScanHistoryDelta:
+    previous_stack = set(previous.detected_stack)
+    current_stack = set(current.detected_stack)
+    previous_steps = set(previous.recommended_next_steps)
+    current_steps = set(current.recommended_next_steps)
+
+    return ScanHistoryDelta(
+        previous_scanned_at=previous.scanned_at,
+        current_scanned_at=current.scanned_at,
+        health_score_delta=current.health_score - previous.health_score,
+        documentation_score_delta=current.documentation_score - previous.documentation_score,
+        todo_count_delta=current.todo_count - previous.todo_count,
+        possible_secret_count_delta=current.possible_secret_count - previous.possible_secret_count,
+        dependency_file_count_delta=current.dependency_file_count - previous.dependency_file_count,
+        test_command_count_delta=current.test_command_count - previous.test_command_count,
+        ci_workflow_count_delta=current.ci_workflow_count - previous.ci_workflow_count,
+        dirty_changed=current.dirty != previous.dirty,
+        branch_changed=current.branch != previous.branch,
+        stack_added=sorted(current_stack - previous_stack),
+        stack_removed=sorted(previous_stack - current_stack),
+        new_recommended_next_steps=sorted(current_steps - previous_steps),
+        resolved_recommended_next_steps=sorted(previous_steps - current_steps),
+    )
+
+
+def latest_history_delta(entries: list[ScanHistoryEntry]) -> ScanHistoryDelta | None:
+    if len(entries) < 2:
+        return None
+    return compare_history_entries(entries[-2], entries[-1])

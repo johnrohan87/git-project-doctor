@@ -62,6 +62,14 @@ History entries include summary metadata only:
 
 History entries must not include source file contents, TODO text, or secret values.
 
+Users may compare the latest two scans with:
+
+```bash
+project-doctor history PATH --diff
+```
+
+The comparison reports score deltas, finding-count deltas, Git state changes, stack changes, and recommended-next-step changes.
+
 ## Documentation Review Signals
 
 The docs scanner should report:

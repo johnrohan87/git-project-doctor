@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Reduced scan noise by ignoring local `.tools` cache/state prefixes.
 - Added latest-scan comparison with `project-doctor history PATH --diff`.
 - Added local summary-only scan history with a `project-doctor history` command.
 - Started Phase 2 with richer documentation quality scoring.

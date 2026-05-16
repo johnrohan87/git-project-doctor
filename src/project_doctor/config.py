@@ -16,6 +16,13 @@ IGNORED_DIRS = {
     "reports",
 }
 
+IGNORED_PATH_PREFIXES = {
+    (".tools", "bin"),
+    (".tools", "cache"),
+    (".tools", "local-state"),
+    (".tools", "tmp"),
+}
+
 DEFAULT_OUTPUT_DIR = Path("reports")
 
 TODO_TAGS = ("TODO", "FIXME", "BUG", "HACK", "REVIEW")

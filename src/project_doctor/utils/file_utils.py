@@ -3,11 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterator
 
-from project_doctor.config import IGNORED_DIRS, TEXT_FILE_SUFFIXES
+from project_doctor.config import IGNORED_DIRS, IGNORED_PATH_PREFIXES, TEXT_FILE_SUFFIXES
 
 
 def should_ignore(path: Path) -> bool:
-    return any(part in IGNORED_DIRS for part in path.parts)
+    parts = path.parts
+    if any(part in IGNORED_DIRS for part in parts):
+        return True
+    for prefix in IGNORED_PATH_PREFIXES:
+        prefix_length = len(prefix)
+        for index in range(len(parts) - prefix_length + 1):
+            if parts[index : index + prefix_length] == prefix:
+                return True
+    return False
 
 
 def iter_files(root: Path) -> Iterator[Path]:

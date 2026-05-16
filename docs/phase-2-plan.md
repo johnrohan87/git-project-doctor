@@ -70,6 +70,17 @@ project-doctor history PATH --diff
 
 The comparison reports score deltas, finding-count deltas, Git state changes, stack changes, and recommended-next-step changes.
 
+## Local Tool Cache Ignore Refinement
+
+Phase 2 also expands scanner ignores for local tool artifacts that create noisy TODO and possible-secret findings:
+
+- `.tools/bin`
+- `.tools/cache`
+- `.tools/local-state`
+- `.tools/tmp`
+
+These paths are treated as generated/local state and are skipped by file scanners.
+
 ## Documentation Review Signals
 
 The docs scanner should report:

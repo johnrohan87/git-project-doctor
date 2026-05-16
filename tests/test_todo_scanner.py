@@ -20,6 +20,19 @@ def test_scan_todos_finds_tags_and_ignores_node_modules(tmp_path):
     ]
 
 
+def test_scan_todos_ignores_local_tool_state_prefixes(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "app.py").write_text("# TODO: keep this\n", encoding="utf-8")
+    ignored = tmp_path / ".tools" / "local-state" / "capture"
+    ignored.mkdir(parents=True)
+    (ignored / "schema.txt").write_text("TODO ignored generated capture\n", encoding="utf-8")
+
+    items = scan_todos(tmp_path)
+
+    assert [(item.file, item.line, item.tag) for item in items] == [("src/app.py", 1, "TODO")]
+
+
 def test_scan_secrets_redacts_values(tmp_path):
     (tmp_path / ".env.example").write_text("API_KEY=actual-secret-value\n", encoding="utf-8")
 
@@ -57,3 +70,14 @@ def test_scan_secrets_ignores_obvious_placeholders(tmp_path):
     )
 
     assert scan_secrets(tmp_path) == []
+
+
+def test_scan_secrets_ignores_local_tool_binary_cache_prefixes(tmp_path):
+    (tmp_path / "config.yml").write_text("API_KEY: real-value\n", encoding="utf-8")
+    ignored = tmp_path / ".tools" / "bin" / "vendor"
+    ignored.mkdir(parents=True)
+    (ignored / "bundle.js").write_text("TOKEN=ignored-vendor-token\n", encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert [(item.file, item.key) for item in findings] == [("config.yml", "API_KEY")]

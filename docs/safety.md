@@ -53,3 +53,10 @@ Scanners must ignore these folders anywhere in the target path:
 - `.cache`
 - `coverage`
 - `reports`
+
+Scanners also ignore local tool/cache prefixes such as:
+
+- `.tools/bin`
+- `.tools/cache`
+- `.tools/local-state`
+- `.tools/tmp`

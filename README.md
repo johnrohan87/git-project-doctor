@@ -45,7 +45,9 @@ By default, `project-doctor scan PATH` writes:
 reports/
 ├── project_report.md
 ├── dependency_report.json
+├── docs_report.json
 ├── todo_report.json
+├── secrets_report.json
 ├── git_status_report.json
 ├── test_ci_report.json
 ├── repo_summary.json
@@ -76,6 +78,24 @@ The generator remains read-only with respect to the scanned repository.
 The scanner ignores large or generated folders such as `.git`, `node_modules`, `dist`, `build`, `.venv`, `env`, `__pycache__`, `.cache`, `coverage`, and `reports`.
 
 Possible secrets are detected by pattern only and values are redacted in output.
+
+See [docs/safety.md](docs/safety.md) for the full Phase 1 safety contract.
+
+## Phase 1 Completion
+
+See [docs/phase-1-completion.md](docs/phase-1-completion.md) for the completion checklist, required report outputs, and remaining low-risk work.
+
+## Release Notes
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes and unreleased changes.
+
+## Test
+
+```bash
+pytest
+```
+
+The test suite includes scanner tests, reporter tests, CLI integration tests, and fixture-based scans for small Python and Node repositories.
 
 ## Roadmap
 

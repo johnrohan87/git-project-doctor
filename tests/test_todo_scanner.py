@@ -29,3 +29,31 @@ def test_scan_secrets_redacts_values(tmp_path):
     assert findings[0].key == "API_KEY"
     assert "actual-secret-value" not in findings[0].redacted_text
     assert "REDACTED" in findings[0].redacted_text
+
+
+def test_scan_secrets_redacts_colon_and_quoted_values(tmp_path):
+    (tmp_path / "config.yml").write_text('service_token: "real-token-value"\n', encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert len(findings) == 1
+    assert findings[0].key == "service_token"
+    assert findings[0].redacted_text == "service_token:...REDACTED"
+    assert "real-token-value" not in findings[0].redacted_text
+
+
+def test_scan_secrets_ignores_obvious_placeholders(tmp_path):
+    (tmp_path / ".env.example").write_text(
+        "\n".join(
+            [
+                "API_KEY=your-api-key",
+                "TOKEN=changeme",
+                "PASSWORD=example-password",
+                "PRIVATE_KEY='placeholder'",
+                "CLIENT_SECRET=dummy-value",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert scan_secrets(tmp_path) == []

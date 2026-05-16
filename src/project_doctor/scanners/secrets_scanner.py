@@ -13,11 +13,36 @@ SECRET_RE = re.compile(
     re.IGNORECASE,
 )
 
+PLACEHOLDER_VALUES = {
+    "",
+    "change-me",
+    "changeme",
+    "demo",
+    "dummy",
+    "example",
+    "fake",
+    "none",
+    "placeholder",
+    "sample",
+    "test",
+    "todo",
+    "your-api-key",
+    "your-secret",
+    "your-token",
+}
+
 
 def _redact(line: str, key: str) -> str:
     prefix = line.split(key, 1)[0] + key
     separator = "=" if "=" in line else ":"
     return f"{prefix}{separator}...REDACTED"
+
+
+def _is_placeholder(value: str) -> bool:
+    normalized = value.strip().strip("'\"").lower()
+    if normalized in PLACEHOLDER_VALUES:
+        return True
+    return normalized.startswith(("your-", "example-", "sample-", "dummy-", "fake-"))
 
 
 def scan_secrets(repo_path: Path) -> list[SecretFinding]:
@@ -30,6 +55,8 @@ def scan_secrets(repo_path: Path) -> list[SecretFinding]:
             if not match:
                 continue
             key = match.group("key")
+            if _is_placeholder(match.group("value")):
+                continue
             findings.append(
                 SecretFinding(
                     file=relative_to_repo(path, repo_path),

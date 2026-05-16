@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added example custom profile configs for Example Project, Example Project, and Example Project.
 - Added structured profile metadata to summaries, markdown context, and scan history.
 - Added custom-oriented health scoring for `profile = "custom"`.
 - Added optional `.project-doctor.toml` / `--config` support for repo-specific TODO classification.

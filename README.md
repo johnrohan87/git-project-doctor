@@ -125,6 +125,28 @@ backlog_doc_markers = ["active-plan", "next-steps"]
 
 When `profile = "custom"` is set, health scoring uses custom-oriented signals and does not penalize missing package files, package test commands, or CI workflows by default. The active profile is included in summaries, markdown context, and scan history as structured metadata.
 
+Example custom profile configs are available in [docs/examples](docs/examples):
+
+- [Example Project](docs/examples/example-project.project-doctor.toml)
+- [Example Project](docs/examples/example-project.project-doctor.toml)
+- [Example Project](docs/examples/example-project.project-doctor.toml)
+
+Use an external `--out` path when scanning active work repos to keep the scanned repo unchanged:
+
+```bash
+project-doctor scan ~/Documents/VSCodeProjects/example-project \
+  --config docs/examples/example-project.project-doctor.toml \
+  --out /tmp/project-doctor-reports/example-project
+
+project-doctor scan ~/Documents/VSCodeProjects/"Example Project" \
+  --config docs/examples/example-project.project-doctor.toml \
+  --out /tmp/project-doctor-reports/example-project
+
+project-doctor scan ~/Documents/VSCodeProjects/Example Project \
+  --config docs/examples/example-project.project-doctor.toml \
+  --out /tmp/project-doctor-reports/example-project
+```
+
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and unreleased changes.

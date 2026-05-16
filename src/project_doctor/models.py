@@ -30,6 +30,10 @@ class DocsReport(BaseModel):
     has_changelog: bool = False
     has_license: bool = False
     has_docs_folder: bool = False
+    readme_line_count: int = 0
+    readme_sections: list[str] = Field(default_factory=list)
+    missing_recommended_sections: list[str] = Field(default_factory=list)
+    documentation_score: int = 0
     setup_keywords_found: list[str] = Field(default_factory=list)
     documents_package_scripts_or_commands: bool = False
     notes: list[str] = Field(default_factory=list)

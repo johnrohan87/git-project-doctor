@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Started Phase 2 with richer documentation quality scoring.
 - Added Phase 1 safety and completion documentation.
 - Added JSON outputs for documentation and possible secret findings.
 - Added CLI integration coverage for public Phase 1 commands.

@@ -22,7 +22,7 @@ def render_project_report(report: ProjectReport) -> str:
         for item in report.todos[:50]
     ]
     secret_lines = [
-        f"- `{item.file}:{item.line}` `{item.key}` {item.redacted_text}"
+        f"- `{item.file}:{item.line}` `{item.key}` [{item.severity}] {item.reason}: {item.redacted_text}"
         for item in report.secrets[:50]
     ]
     script_lines = [

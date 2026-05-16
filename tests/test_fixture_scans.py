@@ -90,6 +90,8 @@ def test_python_fixture_scan_generates_expected_reports_and_redacts_secrets(tmp_
             "line": 1,
             "key": "API_KEY",
             "redacted_text": "API_KEY=...REDACTED",
+            "reason": "secret-like code assignment or configuration reference",
+            "severity": "medium",
         }
     ]
 

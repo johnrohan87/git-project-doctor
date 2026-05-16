@@ -81,6 +81,22 @@ Phase 2 also expands scanner ignores for local tool artifacts that create noisy 
 
 These paths are treated as generated/local state and are skipped by file scanners.
 
+## Possible Secret Classification
+
+Possible secret findings include:
+
+- `severity`: `high`, `medium`, or `low`
+- `reason`: a short explanation of why that severity was assigned
+
+Classification is heuristic and does not expose secret values.
+
+Initial rules:
+
+- configuration-style files such as `.env`, YAML, JSON, TOML, INI, and CFG are high severity
+- source code assignments are medium severity
+- documentation examples are low severity
+- token/cache path variables are low severity
+
 ## Documentation Review Signals
 
 The docs scanner should report:

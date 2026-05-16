@@ -31,6 +31,25 @@ PLACEHOLDER_VALUES = {
     "your-token",
 }
 
+CACHE_OR_PATH_KEYS = (
+    "cache",
+    "cache_dir",
+    "cache_path",
+    "path",
+)
+CODE_REFERENCE_SUFFIXES = (
+    ".py",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".ts",
+    ".tsx",
+    ".rb",
+    ".rs",
+    ".sh",
+)
+DOC_SUFFIXES = (".md", ".txt")
+
 
 def _redact(line: str, key: str) -> str:
     prefix = line.split(key, 1)[0] + key
@@ -45,6 +64,20 @@ def _is_placeholder(value: str) -> bool:
     return normalized.startswith(("your-", "example-", "sample-", "dummy-", "fake-"))
 
 
+def _classify(path: Path, key: str) -> tuple[str, str]:
+    key_lower = key.lower()
+    suffix = path.suffix.lower()
+    if suffix in DOC_SUFFIXES:
+        return "low", "documentation example or note"
+    if any(token in key_lower for token in CACHE_OR_PATH_KEYS):
+        return "low", "token/cache path or configuration reference"
+    if suffix in CODE_REFERENCE_SUFFIXES:
+        return "medium", "secret-like code assignment or configuration reference"
+    if path.name.startswith(".env") or suffix in {".yml", ".yaml", ".json", ".toml", ".ini", ".cfg"}:
+        return "high", "secret-like configuration value"
+    return "medium", "secret-like assignment"
+
+
 def scan_secrets(repo_path: Path) -> list[SecretFinding]:
     findings: list[SecretFinding] = []
     for path in iter_files(repo_path):
@@ -57,12 +90,15 @@ def scan_secrets(repo_path: Path) -> list[SecretFinding]:
             key = match.group("key")
             if _is_placeholder(match.group("value")):
                 continue
+            severity, reason = _classify(path, key)
             findings.append(
                 SecretFinding(
                     file=relative_to_repo(path, repo_path),
                     line=line_number,
                     key=key,
                     redacted_text=_redact(line.strip(), key),
+                    severity=severity,
+                    reason=reason,
                 )
             )
     return findings

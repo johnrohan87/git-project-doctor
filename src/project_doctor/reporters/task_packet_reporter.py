@@ -101,7 +101,10 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
         )
 
     if report.secrets:
-        findings = [f"{item.file}:{item.line} `{item.key}` {item.redacted_text}" for item in report.secrets[:10]]
+        findings = [
+            f"{item.file}:{item.line} `{item.key}` [{item.severity}] {item.reason}: {item.redacted_text}"
+            for item in report.secrets[:10]
+        ]
         packets.append(
             TaskPacket(
                 slug="review-possible-secret-findings",

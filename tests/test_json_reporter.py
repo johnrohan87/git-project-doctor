@@ -46,6 +46,8 @@ def test_write_json_reports_includes_docs_and_redacted_secrets(tmp_path):
             "file": ".env",
             "key": "API_KEY",
             "line": 1,
+            "reason": "secret-like assignment",
             "redacted_text": "API_KEY=...REDACTED",
+            "severity": "medium",
         }
     ]

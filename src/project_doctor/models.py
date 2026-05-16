@@ -51,6 +51,8 @@ class SecretFinding(BaseModel):
     line: int
     key: str
     redacted_text: str
+    severity: str = "medium"
+    reason: str = "secret-like assignment"
 
 
 class StructureReport(BaseModel):

@@ -40,6 +40,8 @@ def test_scan_secrets_redacts_values(tmp_path):
 
     assert len(findings) == 1
     assert findings[0].key == "API_KEY"
+    assert findings[0].severity == "high"
+    assert findings[0].reason == "secret-like configuration value"
     assert "actual-secret-value" not in findings[0].redacted_text
     assert "REDACTED" in findings[0].redacted_text
 
@@ -51,6 +53,7 @@ def test_scan_secrets_redacts_colon_and_quoted_values(tmp_path):
 
     assert len(findings) == 1
     assert findings[0].key == "service_token"
+    assert findings[0].severity == "high"
     assert findings[0].redacted_text == "service_token:...REDACTED"
     assert "real-token-value" not in findings[0].redacted_text
 
@@ -81,3 +84,27 @@ def test_scan_secrets_ignores_local_tool_binary_cache_prefixes(tmp_path):
     findings = scan_secrets(tmp_path)
 
     assert [(item.file, item.key) for item in findings] == [("config.yml", "API_KEY")]
+
+
+def test_scan_secrets_classifies_docs_and_cache_paths_as_low_severity(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "setup.md").write_text("TOKEN=not-a-real-doc-value\n", encoding="utf-8")
+    (tmp_path / "script.py").write_text("token_cache_path='/tmp/token-cache.json'\n", encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert sorted((item.file, item.severity, item.reason) for item in findings) == [
+        ("docs/setup.md", "low", "documentation example or note"),
+        ("script.py", "low", "token/cache path or configuration reference"),
+    ]
+
+
+def test_scan_secrets_classifies_code_assignments_as_medium_severity(tmp_path):
+    (tmp_path / "script.py").write_text("access_token='real-looking-value'\n", encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert len(findings) == 1
+    assert findings[0].severity == "medium"
+    assert findings[0].reason == "secret-like code assignment or configuration reference"

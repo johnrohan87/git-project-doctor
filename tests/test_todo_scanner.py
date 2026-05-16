@@ -18,6 +18,10 @@ def test_scan_todos_finds_tags_and_ignores_node_modules(tmp_path):
         ("src/app.py", 1, "TODO"),
         ("src/app.py", 3, "FIXME"),
     ]
+    assert [(item.category, item.priority) for item in items] == [
+        ("source", "medium"),
+        ("source", "high"),
+    ]
 
 
 def test_scan_todos_ignores_local_tool_state_prefixes(tmp_path):
@@ -31,6 +35,47 @@ def test_scan_todos_ignores_local_tool_state_prefixes(tmp_path):
     items = scan_todos(tmp_path)
 
     assert [(item.file, item.line, item.tag) for item in items] == [("src/app.py", 1, "TODO")]
+
+
+def test_scan_todos_classifies_docs_scripts_and_tests(tmp_path):
+    docs = tmp_path / "docs"
+    scripts = tmp_path / "scripts"
+    tests = tmp_path / "tests"
+    docs.mkdir()
+    scripts.mkdir()
+    tests.mkdir()
+    (docs / "notes.md").write_text("TODO: document release\nFIXME: clarify warning\n", encoding="utf-8")
+    (scripts / "repair.py").write_text("# HACK: temporary repair path\n", encoding="utf-8")
+    (tests / "test_app.py").write_text("# REVIEW: broaden fixture\n", encoding="utf-8")
+
+    items = scan_todos(tmp_path)
+
+    assert [(item.file, item.tag, item.category, item.priority, item.reason) for item in items] == [
+        ("docs/notes.md", "TODO", "documentation", "low", "documentation note or backlog reference"),
+        ("docs/notes.md", "FIXME", "documentation", "medium", "documentation defect marker"),
+        ("scripts/repair.py", "HACK", "script", "medium", "script workaround marker"),
+        ("tests/test_app.py", "REVIEW", "test", "medium", "test review marker"),
+    ]
+
+
+def test_scan_todos_classifies_fixture_and_tmp_artifacts_as_low_priority(tmp_path):
+    tmp_dir = tmp_path / "tmp"
+    fixtures = tmp_path / "fixtures" / "form-submissions"
+    packages = tmp_path / "exports" / "export"
+    tmp_dir.mkdir()
+    fixtures.mkdir(parents=True)
+    packages.mkdir(parents=True)
+    (tmp_dir / "backup.json").write_text('"note": "TODO archived planning note"\n', encoding="utf-8")
+    (fixtures / "sample.json").write_text('"note": "TODO sample fixture"\n', encoding="utf-8")
+    (packages / "settings.json").write_text('"note": "FIXME exported package text"\n', encoding="utf-8")
+
+    items = scan_todos(tmp_path)
+
+    assert [(item.file, item.category, item.priority, item.reason) for item in items] == [
+        ("tmp/backup.json", "generated", "low", "fixture, package, or temporary artifact"),
+        ("fixtures/form-submissions/sample.json", "generated", "low", "fixture, package, or temporary artifact"),
+        ("exports/export/settings.json", "generated", "low", "generated defect marker"),
+    ]
 
 
 def test_scan_secrets_redacts_values(tmp_path):

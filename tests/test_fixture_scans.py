@@ -82,6 +82,9 @@ def test_python_fixture_scan_generates_expected_reports_and_redacts_secrets(tmp_
             "line": 5,
             "tag": "TODO",
             "text": "# TODO: replace fixture implementation",
+            "category": "source",
+            "priority": "medium",
+            "reason": "source code follow-up",
         }
     ]
     assert secrets == [
@@ -135,6 +138,9 @@ def test_node_fixture_scan_detects_stack_test_commands_and_ci(tmp_path):
             "line": 2,
             "tag": "FIXME",
             "text": "// FIXME: add real fixture UI",
+            "category": "source",
+            "priority": "high",
+            "reason": "source defect marker",
         }
     ]
 

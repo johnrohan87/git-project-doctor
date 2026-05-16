@@ -166,9 +166,11 @@ def todos(path: str = typer.Argument(..., help="Repository path to scan.")) -> N
     table = Table(title=f"TODO Items ({len(items)})")
     table.add_column("Location")
     table.add_column("Tag")
+    table.add_column("Priority")
+    table.add_column("Category")
     table.add_column("Text")
     for item in items:
-        table.add_row(f"{item.file}:{item.line}", item.tag, item.text)
+        table.add_row(f"{item.file}:{item.line}", item.tag, item.priority, item.category, item.text)
     console.print(table)
 
 

@@ -4,6 +4,8 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added category, priority, and reason classification for TODO findings.
+- Classified fixture, package, and temporary TODO findings as generated artifacts.
 - Reduced possible-secret false positives for token variable syntax and endpoint/control-flag references.
 - Added severity and reason classification for possible secret findings.
 - Reduced scan noise by ignoring local `.tools` cache/state prefixes.

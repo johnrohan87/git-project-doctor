@@ -76,7 +76,10 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
         )
 
     if report.todos:
-        top_items = [f"{item.file}:{item.line} [{item.tag}] {item.text}" for item in report.todos[:10]]
+        top_items = [
+            f"{item.file}:{item.line} [{item.tag}] [{item.priority}/{item.category}] {item.text}"
+            for item in report.todos[:10]
+        ]
         packets.append(
             TaskPacket(
                 slug="review-todo-fixme-comments",

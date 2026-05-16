@@ -99,6 +99,22 @@ Initial rules:
 - code syntax references such as type annotations, arrow parameters, endpoint template constants, and refresh-token control flags are ignored as false positives
 - known non-secret token-like names such as `monthTokens` are ignored as false positives
 
+## TODO Triage Classification
+
+TODO findings include:
+
+- `category`: `source`, `script`, `test`, `documentation`, or `other`
+- `priority`: `high`, `medium`, or `low`
+- `reason`: a short explanation of the classification
+
+Initial rules:
+
+- documentation TODOs are low priority unless they are `FIXME` or `BUG`
+- source `FIXME` and `BUG` markers are high priority
+- script and test follow-ups are medium priority by default
+- fixture, package, and temporary artifact TODOs are `generated` category and low priority
+- `HACK` and `REVIEW` markers are medium priority
+
 ## Documentation Review Signals
 
 The docs scanner should report:

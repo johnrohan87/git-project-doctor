@@ -44,6 +44,9 @@ class TodoItem(BaseModel):
     line: int
     tag: str
     text: str
+    category: str = "source"
+    priority: str = "medium"
+    reason: str = "source TODO"
 
 
 class SecretFinding(BaseModel):

@@ -18,7 +18,7 @@ def _list(items: list[str], empty: str = "None detected") -> str:
 def render_project_report(report: ProjectReport) -> str:
     deps_found = report.dependencies.files_found + report.dependencies.package_manager_locks
     todo_lines = [
-        f"- `{item.file}:{item.line}` [{item.tag}] {item.text}"
+        f"- `{item.file}:{item.line}` [{item.tag}] [{item.priority}/{item.category}] {item.reason}: {item.text}"
         for item in report.todos[:50]
     ]
     secret_lines = [

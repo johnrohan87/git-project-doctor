@@ -29,8 +29,9 @@ def _sample_repo(path: Path) -> Path:
 def test_scan_writes_reports_to_custom_output_dir(tmp_path):
     repo = _sample_repo(tmp_path / "repo")
     out_dir = tmp_path / "doctor-output"
+    history_dir = tmp_path / "history"
 
-    result = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir)])
+    result = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir), "--history-dir", str(history_dir)])
 
     assert result.exit_code == 0
     assert (out_dir / "project_report.md").exists()
@@ -43,6 +44,7 @@ def test_scan_writes_reports_to_custom_output_dir(tmp_path):
     assert (out_dir / "test_ci_report.json").exists()
     assert (out_dir / "codex_context.md").exists()
     assert list((out_dir / "task_packets").glob("*.md"))
+    assert list(history_dir.glob("*.jsonl"))
     assert not (repo / "reports").exists()
 
 
@@ -50,7 +52,7 @@ def test_scan_report_redacts_secret_values(tmp_path):
     repo = _sample_repo(tmp_path / "repo")
     out_dir = tmp_path / "doctor-output"
 
-    result = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir)])
+    result = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir), "--no-history"])
 
     assert result.exit_code == 0
     combined = "\n".join(path.read_text(encoding="utf-8") for path in out_dir.rglob("*") if path.is_file())

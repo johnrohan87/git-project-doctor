@@ -4,7 +4,7 @@ Phase 2 starts with deeper local analysis while preserving the Phase 1 safety mo
 
 ## Approved Phase 2 Slice
 
-The first approved slice is richer documentation quality review.
+The first approved slices are richer documentation quality review and local scan history.
 
 This slice may:
 
@@ -22,6 +22,45 @@ This slice must not:
 - call AI APIs
 - add database storage
 - implement auto-fix behavior
+
+## Local Scan History
+
+`project-doctor scan PATH` records a summary-only JSONL history entry by default.
+
+Default location:
+
+```text
+~/.local/share/git-project-doctor/history
+```
+
+Users may opt out with:
+
+```bash
+project-doctor scan PATH --no-history
+```
+
+Users may choose a different local history directory with:
+
+```bash
+project-doctor scan PATH --history-dir /path/to/history
+```
+
+History entries include summary metadata only:
+
+- scan timestamp
+- repository path hash and repository name
+- Git branch and dirty state
+- health score
+- documentation score
+- detected stack
+- TODO count
+- possible secret count
+- dependency file count
+- test command count
+- CI workflow count
+- recommended next step text
+
+History entries must not include source file contents, TODO text, or secret values.
 
 ## Documentation Review Signals
 

@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added local summary-only scan history with a `project-doctor history` command.
 - Started Phase 2 with richer documentation quality scoring.
 - Added Phase 1 safety and completion documentation.
 - Added JSON outputs for documentation and possible secret findings.

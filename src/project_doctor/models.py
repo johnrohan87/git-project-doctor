@@ -77,6 +77,26 @@ class RepoSummary(BaseModel):
     health_score: int = 0
 
 
+class ScanHistoryEntry(BaseModel):
+    schema_version: int = 1
+    scanned_at: str
+    repo_path: str
+    repo_hash: str
+    repo_name: str
+    branch: str | None = None
+    is_git_repo: bool = False
+    dirty: bool = False
+    health_score: int = 0
+    documentation_score: int = 0
+    detected_stack: list[str] = Field(default_factory=list)
+    todo_count: int = 0
+    possible_secret_count: int = 0
+    dependency_file_count: int = 0
+    test_command_count: int = 0
+    ci_workflow_count: int = 0
+    recommended_next_steps: list[str] = Field(default_factory=list)
+
+
 class ProjectReport(BaseModel):
     summary: RepoSummary
     git: GitStatus

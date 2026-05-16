@@ -7,6 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 from project_doctor.config import DEFAULT_OUTPUT_DIR
+from project_doctor.history import load_history, write_history_entry
 from project_doctor.models import ProjectReport, RepoSummary
 from project_doctor.reporters.codex_context_reporter import write_codex_context
 from project_doctor.reporters.json_reporter import write_json_reports
@@ -115,8 +116,10 @@ def _validate_path(path: str) -> Path:
 def scan(
     path: str = typer.Argument(..., help="Repository path to scan."),
     out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory for reports."),
+    history: bool = typer.Option(True, "--history/--no-history", help="Record a local scan history entry."),
+    history_dir: Path | None = typer.Option(None, "--history-dir", help="Directory for local scan history JSONL files."),
 ) -> None:
-    """Run all scanners and write Phase 1 reports."""
+    """Run all scanners and write reports."""
     repo_path = _validate_path(path)
     out_dir = out.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -126,9 +129,17 @@ def scan(
     write_json_reports(report, out_dir)
     write_codex_context(report, out_dir)
     task_paths = write_task_packets(report, out_dir)
+    history_path = None
+    if history:
+        try:
+            history_path = write_history_entry(report, history_dir)
+        except OSError as exc:
+            console.print(f"[yellow]Could not write scan history:[/yellow] {exc}")
 
     console.print(f"[green]Wrote reports to[/green] {out_dir}")
     console.print(f"Wrote {len(task_paths)} task packet(s) to {out_dir / 'task_packets'}")
+    if history_path:
+        console.print(f"Wrote scan history to {history_path}")
     console.print(f"Health score: {report.summary.health_score} / 100")
 
 
@@ -227,6 +238,40 @@ def task_packets(
     report = build_report(repo_path)
     paths = write_task_packets(report, out_dir)
     console.print(f"[green]Wrote {len(paths)} task packet(s) to[/green] {out_dir / 'task_packets'}")
+
+
+@app.command("history")
+def history_command(
+    path: str = typer.Argument(..., help="Repository path to inspect history for."),
+    history_dir: Path | None = typer.Option(None, "--history-dir", help="Directory containing scan history JSONL files."),
+    limit: int = typer.Option(10, "--limit", "-n", min=1, help="Maximum history entries to show."),
+) -> None:
+    """Show local scan history for a repository."""
+    repo_path = _validate_path(path)
+    entries = load_history(repo_path, history_dir)
+    table = Table(title=f"Scan History ({len(entries)})")
+    table.add_column("Scanned At")
+    table.add_column("Health")
+    table.add_column("Docs")
+    table.add_column("TODOs")
+    table.add_column("Secrets")
+    table.add_column("Dirty")
+    table.add_column("Branch")
+
+    for entry in entries[-limit:]:
+        table.add_row(
+            entry.scanned_at,
+            str(entry.health_score),
+            str(entry.documentation_score),
+            str(entry.todo_count),
+            str(entry.possible_secret_count),
+            str(entry.dirty),
+            entry.branch or "",
+        )
+
+    if not entries:
+        table.add_row("No history found", "", "", "", "", "", "")
+    console.print(table)
 
 
 if __name__ == "__main__":

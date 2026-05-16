@@ -39,9 +39,14 @@ runner = CliRunner()
 
 def _scan_fixture(name: str, tmp_path: Path) -> Path:
     out_dir = tmp_path / f"{name}-reports"
-    result = runner.invoke(app, ["scan", str(FIXTURES / name), "--out", str(out_dir)])
+    history_dir = tmp_path / f"{name}-history"
+    result = runner.invoke(
+        app,
+        ["scan", str(FIXTURES / name), "--out", str(out_dir), "--history-dir", str(history_dir)],
+    )
 
     assert result.exit_code == 0, result.output
+    assert list(history_dir.glob("*.jsonl"))
     return out_dir
 
 

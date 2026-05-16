@@ -9,11 +9,31 @@ from project_doctor.utils.file_utils import is_probably_text, iter_files, read_t
 from project_doctor.utils.path_utils import relative_to_repo
 
 TAG_RE = re.compile(r"\b(" + "|".join(TODO_TAGS) + r")\b", re.IGNORECASE)
+HISTORICAL_DOC_MARKERS = (
+    "changelog",
+    "retrospective",
+    "super-productivity",
+)
+BACKLOG_DOC_MARKERS = (
+    "auth-lanes",
+    "backlog",
+    "build-runbook",
+    "checklist",
+    "current-status",
+    "known-issues",
+    "migration",
+    "next-steps",
+    "readiness",
+    "todo",
+    "transfer-status",
+)
 
 
 def _classify_todo(relative_path: str, tag: str) -> tuple[str, str, str]:
     path_lower = relative_path.lower()
     tag_upper = tag.upper()
+
+    is_doc = path_lower.startswith("docs/") or path_lower.endswith((".md", ".txt"))
 
     if path_lower.startswith(
         (
@@ -26,7 +46,15 @@ def _classify_todo(relative_path: str, tag: str) -> tuple[str, str, str]:
         category = "generated"
         priority = "low"
         reason = "fixture, package, or temporary artifact"
-    elif path_lower.startswith("docs/") or path_lower.endswith((".md", ".txt")):
+    elif is_doc and any(marker in path_lower for marker in HISTORICAL_DOC_MARKERS):
+        category = "historical"
+        priority = "low"
+        reason = "historical documentation or work log"
+    elif is_doc and any(marker in path_lower for marker in BACKLOG_DOC_MARKERS):
+        category = "backlog"
+        priority = "medium"
+        reason = "active backlog or planning document"
+    elif is_doc:
         category = "documentation"
         priority = "low"
         reason = "documentation note or backlog reference"
@@ -48,9 +76,9 @@ def _classify_todo(relative_path: str, tag: str) -> tuple[str, str, str]:
         reason = "general follow-up"
 
     if tag_upper in {"BUG", "FIXME"}:
-        if category == "generated":
+        if category in {"generated", "historical"}:
             priority = "low"
-        elif category == "documentation":
+        elif category in {"documentation", "backlog"}:
             priority = "medium"
         else:
             priority = "high"

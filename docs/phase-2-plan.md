@@ -103,13 +103,15 @@ Initial rules:
 
 TODO findings include:
 
-- `category`: `source`, `script`, `test`, `documentation`, or `other`
+- `category`: `source`, `script`, `test`, `documentation`, `backlog`, `historical`, `generated`, or `other`
 - `priority`: `high`, `medium`, or `low`
 - `reason`: a short explanation of the classification
 
 Initial rules:
 
 - documentation TODOs are low priority unless they are `FIXME` or `BUG`
+- historical docs and work logs are low priority even when they contain defect words
+- active backlog/planning docs are categorized separately from general documentation
 - source `FIXME` and `BUG` markers are high priority
 - script and test follow-ups are medium priority by default
 - fixture, package, and temporary artifact TODOs are `generated` category and low priority

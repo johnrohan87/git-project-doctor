@@ -50,12 +50,13 @@ def test_scan_todos_classifies_docs_scripts_and_tests(tmp_path):
 
     items = scan_todos(tmp_path)
 
-    assert [(item.file, item.tag, item.category, item.priority, item.reason) for item in items] == [
+    expected = [
         ("docs/notes.md", "TODO", "documentation", "low", "documentation note or backlog reference"),
         ("docs/notes.md", "FIXME", "documentation", "medium", "documentation defect marker"),
         ("scripts/repair.py", "HACK", "script", "medium", "script workaround marker"),
         ("tests/test_app.py", "REVIEW", "test", "medium", "test review marker"),
     ]
+    assert sorted((item.file, item.tag, item.category, item.priority, item.reason) for item in items) == sorted(expected)
 
 
 def test_scan_todos_classifies_fixture_and_tmp_artifacts_as_low_priority(tmp_path):
@@ -76,6 +77,23 @@ def test_scan_todos_classifies_fixture_and_tmp_artifacts_as_low_priority(tmp_pat
         ("fixtures/form-submissions/sample.json", "generated", "low", "fixture, package, or temporary artifact"),
         ("exports/export/settings.json", "generated", "low", "generated defect marker"),
     ]
+
+
+def test_scan_todos_splits_historical_and_backlog_docs(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "release-changelog.md").write_text("FIXME: old release note\n", encoding="utf-8")
+    (docs / "active-todo.md").write_text("TODO: active backlog item\n", encoding="utf-8")
+    (docs / "feature-notes.md").write_text("TODO: explain usage\n", encoding="utf-8")
+
+    items = scan_todos(tmp_path)
+
+    expected = [
+        ("docs/release-changelog.md", "historical", "low", "historical defect marker"),
+        ("docs/active-todo.md", "backlog", "medium", "active backlog or planning document"),
+        ("docs/feature-notes.md", "documentation", "low", "documentation note or backlog reference"),
+    ]
+    assert sorted((item.file, item.category, item.priority, item.reason) for item in items) == sorted(expected)
 
 
 def test_scan_secrets_redacts_values(tmp_path):

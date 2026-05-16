@@ -21,11 +21,53 @@ def _slugify(value: str) -> str:
     return slug[:70] or "task"
 
 
+def _is_custom_profile(report: ProjectReport) -> bool:
+    return "Profile: custom" in report.summary.detected_stack
+
+
+def _active_todos(report: ProjectReport):
+    return [item for item in report.todos if item.category in {"backlog", "script", "source"}]
+
+
+def _high_or_medium_secrets(report: ProjectReport):
+    return [item for item in report.secrets if item.severity in {"high", "medium"}]
+
+
 def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
     packets: list[TaskPacket] = []
     stack = ", ".join(report.summary.detected_stack) or "Unknown"
+    is_custom = _is_custom_profile(report)
 
-    if not report.docs.has_readme or not report.docs.documents_package_scripts_or_commands:
+    if is_custom and (
+        not report.docs.has_readme
+        or report.docs.missing_recommended_sections
+        or not report.docs.documents_package_scripts_or_commands
+    ):
+        packets.append(
+            TaskPacket(
+                slug="improve-custom-runbook-documentation",
+                title="Improve custom runbook documentation",
+                context=[
+                    f"This repo appears to be: {stack}.",
+                    f"README present: {report.docs.has_readme}.",
+                    f"Missing README sections: {', '.join(report.docs.missing_recommended_sections) or 'none'}.",
+                    f"Documentation notes: {'; '.join(report.docs.notes) or 'none'}.",
+                ],
+                rules=[
+                    "Update documentation only.",
+                    "Do not change custom solution exports, scripts, or app code.",
+                    "Do not commit, push, pull, reset, checkout, or merge.",
+                    "Do not add real secret values.",
+                ],
+                acceptance=[
+                    "custom setup and runbook steps are clear.",
+                    "Testing or validation commands are documented when they exist.",
+                    "Configuration and environment values use placeholders only.",
+                    "Current status, backlog, or migration notes link to the active planning docs when applicable.",
+                ],
+            )
+        )
+    elif not report.docs.has_readme or not report.docs.documents_package_scripts_or_commands:
         packets.append(
             TaskPacket(
                 slug="fix-readme-setup-instructions",
@@ -51,7 +93,7 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
-    if not report.docs.has_env_example:
+    if not is_custom and not report.docs.has_env_example:
         packets.append(
             TaskPacket(
                 slug="add-env-example",
@@ -75,23 +117,30 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
-    if report.todos:
+    todo_items = _active_todos(report) if is_custom else report.todos
+    if todo_items:
         top_items = [
             f"{item.file}:{item.line} [{item.tag}] [{item.priority}/{item.category}] {item.text}"
-            for item in report.todos[:10]
+            for item in todo_items[:10]
         ]
         packets.append(
             TaskPacket(
-                slug="review-todo-fixme-comments",
-                title="Review TODO/FIXME comments",
+                slug="review-active-custom-todo-backlog" if is_custom else "review-todo-fixme-comments",
+                title="Review active custom TODO backlog" if is_custom else "Review TODO/FIXME comments",
                 context=[
-                    f"{len(report.todos)} TODO/FIXME/HACK/BUG/REVIEW comments were found.",
+                    (
+                        f"{len(todo_items)} active backlog/script/source TODO findings were found."
+                        if is_custom
+                        else f"{len(todo_items)} TODO/FIXME/HACK/BUG/REVIEW comments were found."
+                    ),
                     "Top findings:",
                     *top_items,
                 ],
                 rules=[
                     "Start with review and classification.",
-                    "Do not make broad refactors.",
+                    "Keep custom follow-up work scoped to one runbook, script, or flow area at a time."
+                    if is_custom
+                    else "Do not make broad refactors.",
                     "Do not remove TODO comments unless the underlying issue is actually resolved.",
                     "Do not commit unless explicitly requested.",
                 ],
@@ -103,17 +152,22 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
-    if report.secrets:
+    secret_items = _high_or_medium_secrets(report) if is_custom else report.secrets
+    if secret_items:
         findings = [
             f"{item.file}:{item.line} `{item.key}` [{item.severity}] {item.reason}: {item.redacted_text}"
-            for item in report.secrets[:10]
+            for item in secret_items[:10]
         ]
         packets.append(
             TaskPacket(
                 slug="review-possible-secret-findings",
                 title="Review possible secret findings",
                 context=[
-                    f"{len(report.secrets)} possible secret findings were detected by pattern.",
+                    (
+                        f"{len(secret_items)} high/medium possible secret findings were detected by pattern."
+                        if is_custom
+                        else f"{len(secret_items)} possible secret findings were detected by pattern."
+                    ),
                     "Values are redacted in this packet.",
                     *findings,
                 ],
@@ -131,7 +185,7 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
-    if not report.test_ci.test_commands:
+    if not is_custom and not report.test_ci.test_commands:
         packets.append(
             TaskPacket(
                 slug="define-local-test-command",
@@ -156,7 +210,7 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
-    if report.test_ci.test_commands and not report.test_ci.ci_workflows:
+    if not is_custom and report.test_ci.test_commands and not report.test_ci.ci_workflows:
         packets.append(
             TaskPacket(
                 slug="add-ci-workflow-plan",

@@ -42,6 +42,38 @@ def test_build_task_packets_from_findings():
     assert "Review possible secret findings" in titles
 
 
+def test_custom_profile_task_packets_skip_generic_package_tasks():
+    report = _report()
+    report.summary.detected_stack = ["Profile: custom"]
+    report.todos = [
+        TodoItem(file="docs/current-status.md", line=3, tag="TODO", text="TODO: finish rollout", category="backlog"),
+        TodoItem(file="tmp/export.json", line=1, tag="TODO", text="TODO generated", category="generated"),
+    ]
+    report.secrets = [
+        SecretFinding(
+            file="docs/notes.md",
+            line=1,
+            key="TOKEN",
+            redacted_text="TOKEN=...REDACTED",
+            severity="low",
+            reason="documentation token reference",
+        )
+    ]
+
+    packets = build_task_packets(report)
+
+    titles = [packet.title for packet in packets]
+    assert "Improve custom runbook documentation" in titles
+    assert "Review active custom TODO backlog" in titles
+    assert "Add .env.example placeholders" not in titles
+    assert "Define local test command" not in titles
+    assert "Review possible secret findings" not in titles
+
+    todo_packet = next(packet for packet in packets if packet.title == "Review active custom TODO backlog")
+    assert "1 active backlog/script/source TODO findings were found." in todo_packet.context
+    assert all("tmp/export.json" not in line for line in todo_packet.context)
+
+
 def test_write_task_packets_redacts_secret_values(tmp_path):
     paths = write_task_packets(_report(), tmp_path)
 

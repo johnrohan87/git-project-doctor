@@ -134,6 +134,20 @@ backlog_doc_markers = ["active-plan"]
 
 Config is local-only and affects scanner classification; it does not permit modifying scanned repositories.
 
+## custom Health Profile
+
+When `profile = "custom"` is configured, health scoring uses custom-oriented signals instead of generic package-app signals.
+
+custom scoring weighs:
+
+- documentation score
+- Git repository and dirty state
+- active backlog/script/source TODO count
+- high and medium possible-secret findings
+- project structure signals
+
+custom scoring does not penalize missing package dependency files, npm/Python test commands, or CI workflows by default.
+
 ## Documentation Review Signals
 
 The docs scanner should report:

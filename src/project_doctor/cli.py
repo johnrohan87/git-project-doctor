@@ -9,6 +9,7 @@ from rich.table import Table
 from project_doctor.config import DEFAULT_OUTPUT_DIR
 from project_doctor.history import latest_history_delta, load_history, write_history_entry
 from project_doctor.models import ProjectReport, RepoSummary
+from project_doctor.models import ProjectDoctorConfig
 from project_doctor.project_config import load_project_config
 from project_doctor.reporters.codex_context_reporter import write_codex_context
 from project_doctor.reporters.json_reporter import write_json_reports
@@ -27,7 +28,19 @@ app = typer.Typer(help="Local-first Git project review and update planning tool.
 console = Console()
 
 
-def _recommended_next_steps(report: ProjectReport) -> list[str]:
+def _is_custom_profile(config: ProjectDoctorConfig) -> bool:
+    return config.profile == "custom"
+
+
+def _active_todo_count(report: ProjectReport) -> int:
+    return sum(1 for item in report.todos if item.category in {"backlog", "script", "source", "test", "other"})
+
+
+def _recommended_next_steps(report: ProjectReport, config: ProjectDoctorConfig | None = None) -> list[str]:
+    active_config = config or ProjectDoctorConfig()
+    if _is_custom_profile(active_config):
+        return _custom_recommended_next_steps(report)
+
     steps: list[str] = []
     if not report.docs.has_readme:
         steps.append("Add README.md with setup and usage instructions")
@@ -54,7 +67,33 @@ def _recommended_next_steps(report: ProjectReport) -> list[str]:
     return steps
 
 
-def _health_score(report: ProjectReport) -> int:
+def _custom_recommended_next_steps(report: ProjectReport) -> list[str]:
+    steps: list[str] = []
+    active_todos = _active_todo_count(report)
+    high_or_medium_secrets = [item for item in report.secrets if item.severity in {"high", "medium"}]
+
+    if report.docs.documentation_score < 70:
+        steps.append("Improve custom documentation coverage and command/runbook clarity")
+    if active_todos:
+        steps.append(f"Review {active_todos} active backlog/script/source TODO findings")
+    if high_or_medium_secrets:
+        steps.append(f"Review {len(high_or_medium_secrets)} high/medium possible secret findings")
+    if not report.git.is_git_repo:
+        steps.append("Initialize Git or scan the custom repository root if this path is nested")
+    elif report.git.dirty:
+        steps.append("Review modified and untracked files before starting custom update work")
+    if not report.structure.important_files and not report.structure.important_folders:
+        steps.append("Document custom project structure and important operational files")
+    if not steps:
+        steps.append("No urgent custom profile issues detected; compare scan history after the next run")
+    return steps
+
+
+def _health_score(report: ProjectReport, config: ProjectDoctorConfig | None = None) -> int:
+    active_config = config or ProjectDoctorConfig()
+    if _is_custom_profile(active_config):
+        return _custom_health_score(report)
+
     score = 100
     if not report.git.is_git_repo:
         score -= 15
@@ -77,6 +116,25 @@ def _health_score(report: ProjectReport) -> int:
     return max(0, min(100, score))
 
 
+def _custom_health_score(report: ProjectReport) -> int:
+    score = 100
+    if not report.git.is_git_repo:
+        score -= 15
+    if report.git.dirty:
+        score -= 10
+    score -= min((100 - report.docs.documentation_score) // 4, 25)
+
+    high_secrets = sum(1 for item in report.secrets if item.severity == "high")
+    medium_secrets = sum(1 for item in report.secrets if item.severity == "medium")
+    score -= min((high_secrets * 15) + (medium_secrets * 5), 30)
+
+    high_todos = sum(1 for item in report.todos if item.priority == "high")
+    active_todos = _active_todo_count(report)
+    score -= min((high_todos * 5) + (active_todos // 10), 25)
+
+    return max(0, min(100, score))
+
+
 def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectReport:
     config = load_project_config(repo_path, config_path)
     git = scan_git(repo_path)
@@ -87,10 +145,14 @@ def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectRep
     structure = scan_structure(repo_path)
     test_ci = scan_test_ci(repo_path)
 
+    detected_stack = list(structure.project_types)
+    if config.profile:
+        detected_stack.append(f"Profile: {config.profile}")
+
     summary = RepoSummary(
         path=repo_path,
         name=repo_path.name,
-        detected_stack=structure.project_types,
+        detected_stack=detected_stack,
     )
     report = ProjectReport(
         summary=summary,
@@ -102,8 +164,8 @@ def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectRep
         structure=structure,
         test_ci=test_ci,
     )
-    report.summary.health_score = _health_score(report)
-    report.summary.recommended_next_steps = _recommended_next_steps(report)
+    report.summary.health_score = _health_score(report, config)
+    report.summary.recommended_next_steps = _recommended_next_steps(report, config)
     return report
 
 

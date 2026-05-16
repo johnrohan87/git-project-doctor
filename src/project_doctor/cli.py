@@ -9,6 +9,7 @@ from rich.table import Table
 from project_doctor.config import DEFAULT_OUTPUT_DIR
 from project_doctor.history import latest_history_delta, load_history, write_history_entry
 from project_doctor.models import ProjectReport, RepoSummary
+from project_doctor.project_config import load_project_config
 from project_doctor.reporters.codex_context_reporter import write_codex_context
 from project_doctor.reporters.json_reporter import write_json_reports
 from project_doctor.reporters.markdown_reporter import write_markdown_reports
@@ -76,11 +77,12 @@ def _health_score(report: ProjectReport) -> int:
     return max(0, min(100, score))
 
 
-def build_report(repo_path: Path) -> ProjectReport:
+def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectReport:
+    config = load_project_config(repo_path, config_path)
     git = scan_git(repo_path)
     dependencies = scan_dependencies(repo_path)
     docs = scan_docs(repo_path)
-    todos = scan_todos(repo_path)
+    todos = scan_todos(repo_path, config)
     secrets = scan_secrets(repo_path)
     structure = scan_structure(repo_path)
     test_ci = scan_test_ci(repo_path)
@@ -118,13 +120,14 @@ def scan(
     out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory for reports."),
     history: bool = typer.Option(True, "--history/--no-history", help="Record a local scan history entry."),
     history_dir: Path | None = typer.Option(None, "--history-dir", help="Directory for local scan history JSONL files."),
+    config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Run all scanners and write reports."""
     repo_path = _validate_path(path)
     out_dir = out.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    report = build_report(repo_path)
+    report = build_report(repo_path, config)
     write_markdown_reports(report, out_dir)
     write_json_reports(report, out_dir)
     write_codex_context(report, out_dir)
@@ -160,9 +163,13 @@ def git_status(path: str = typer.Argument(..., help="Repository path to inspect.
 
 
 @app.command()
-def todos(path: str = typer.Argument(..., help="Repository path to scan.")) -> None:
+def todos(
+    path: str = typer.Argument(..., help="Repository path to scan."),
+    config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
+) -> None:
     """Find TODO, FIXME, HACK, BUG, and REVIEW comments."""
-    items = scan_todos(_validate_path(path))
+    repo_path = _validate_path(path)
+    items = scan_todos(repo_path, load_project_config(repo_path, config))
     table = Table(title=f"TODO Items ({len(items)})")
     table.add_column("Location")
     table.add_column("Tag")
@@ -218,12 +225,13 @@ def test_ci(path: str = typer.Argument(..., help="Repository path to inspect."))
 def codex_context(
     path: str = typer.Argument(..., help="Repository path to scan."),
     out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
+    config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Generate codex_context.md only."""
     repo_path = _validate_path(path)
     out_dir = out.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    report = build_report(repo_path)
+    report = build_report(repo_path, config)
     write_codex_context(report, out_dir)
     console.print(f"[green]Wrote[/green] {out_dir / 'codex_context.md'}")
 
@@ -232,12 +240,13 @@ def codex_context(
 def task_packets(
     path: str = typer.Argument(..., help="Repository path to scan."),
     out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
+    config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Generate Codex/Cline task packet Markdown files."""
     repo_path = _validate_path(path)
     out_dir = out.expanduser().resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    report = build_report(repo_path)
+    report = build_report(repo_path, config)
     paths = write_task_packets(report, out_dir)
     console.print(f"[green]Wrote {len(paths)} task packet(s) to[/green] {out_dir / 'task_packets'}")
 

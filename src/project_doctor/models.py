@@ -49,6 +49,13 @@ class TodoItem(BaseModel):
     reason: str = "source TODO"
 
 
+class ProjectDoctorConfig(BaseModel):
+    profile: str | None = None
+    generated_path_prefixes: list[str] = Field(default_factory=list)
+    historical_doc_markers: list[str] = Field(default_factory=list)
+    backlog_doc_markers: list[str] = Field(default_factory=list)
+
+
 class SecretFinding(BaseModel):
     file: str
     line: int

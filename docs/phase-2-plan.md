@@ -117,6 +117,23 @@ Initial rules:
 - fixture, package, and temporary artifact TODOs are `generated` category and low priority
 - `HACK` and `REVIEW` markers are medium priority
 
+## Repo-Specific Config
+
+Phase 2 supports optional TOML config from `.project-doctor.toml` in the scanned repo or from `--config`.
+
+Supported fields:
+
+```toml
+profile = "custom"
+
+[todos]
+generated_path_prefixes = ["exports"]
+historical_doc_markers = ["decision-log"]
+backlog_doc_markers = ["active-plan"]
+```
+
+Config is local-only and affects scanner classification; it does not permit modifying scanned repositories.
+
 ## Documentation Review Signals
 
 The docs scanner should report:

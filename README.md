@@ -104,6 +104,25 @@ To compare the latest two scans:
 project-doctor history PATH --diff
 ```
 
+## Project Config
+
+`project-doctor` can read optional repo-specific configuration from `.project-doctor.toml` in the scanned repo, or from an explicit path:
+
+```bash
+project-doctor scan PATH --config /path/to/project-doctor.toml
+```
+
+Example:
+
+```toml
+profile = "custom"
+
+[todos]
+generated_path_prefixes = ["exports", "snapshots"]
+historical_doc_markers = ["decision-log"]
+backlog_doc_markers = ["active-plan", "next-steps"]
+```
+
 ## Release Notes
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes and unreleased changes.

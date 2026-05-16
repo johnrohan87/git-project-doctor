@@ -83,6 +83,21 @@ def test_read_only_subcommands_smoke(tmp_path):
         assert expected in result.output
 
 
+def test_todos_command_accepts_config_file(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    custom = repo / "custom-exports"
+    custom.mkdir()
+    (custom / "sample.json").write_text('"note": "TODO generated"\n', encoding="utf-8")
+    config = tmp_path / "doctor.toml"
+    config.write_text('[todos]\ngenerated_path_prefixes = ["custom-exports"]\n', encoding="utf-8")
+
+    result = runner.invoke(app, ["todos", str(repo), "--config", str(config)])
+
+    assert result.exit_code == 0
+    assert "generated" in result.output
+
+
 def test_context_commands_write_requested_outputs(tmp_path):
     repo = _sample_repo(tmp_path / "repo")
     out_dir = tmp_path / "doctor-output"

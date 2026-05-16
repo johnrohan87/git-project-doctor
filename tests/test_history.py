@@ -30,6 +30,8 @@ def test_build_history_entry_contains_summary_without_findings(tmp_path):
     entry = build_history_entry(report)
 
     assert entry.repo_name == "repo"
+    assert entry.schema_version == 2
+    assert entry.profile is None
     assert entry.health_score == report.summary.health_score
     assert entry.documentation_score == report.docs.documentation_score
     assert entry.todo_count == 1
@@ -37,6 +39,18 @@ def test_build_history_entry_contains_summary_without_findings(tmp_path):
     assert entry.recommended_next_steps
     payload = entry.model_dump(mode="json")
     assert "TODO: test history" not in json.dumps(payload)
+
+
+def test_build_history_entry_includes_profile(tmp_path):
+    repo = _repo(tmp_path / "repo")
+    (repo / ".project-doctor.toml").write_text('profile = "custom"\n', encoding="utf-8")
+    report = build_report(repo)
+
+    entry = build_history_entry(report)
+
+    assert report.summary.profile == "custom"
+    assert entry.profile == "custom"
+    assert "Profile: custom" not in entry.detected_stack
 
 
 def test_write_and_load_history_entries(tmp_path):
@@ -76,6 +90,7 @@ def test_compare_history_entries_reports_deltas(tmp_path):
     (repo / "config.yml").write_text("API_KEY: real-value\n", encoding="utf-8")
     second = build_history_entry(build_report(repo))
     second.scanned_at = "2026-05-16T11:00:00+00:00"
+    second.profile = "custom"
 
     delta = compare_history_entries(first, second)
 
@@ -84,6 +99,7 @@ def test_compare_history_entries_reports_deltas(tmp_path):
     assert delta.todo_count_delta == 1
     assert delta.possible_secret_count_delta == 1
     assert delta.health_score_delta < 0
+    assert delta.profile_changed is True
 
 
 def test_history_diff_command_displays_latest_delta(tmp_path):

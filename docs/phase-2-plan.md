@@ -138,6 +138,8 @@ Config is local-only and affects scanner classification; it does not permit modi
 
 When `profile = "custom"` is configured, health scoring uses custom-oriented signals instead of generic package-app signals.
 
+The active profile is written as structured report metadata and scan history metadata. It should not be encoded as a detected project stack value.
+
 custom scoring weighs:
 
 - documentation score

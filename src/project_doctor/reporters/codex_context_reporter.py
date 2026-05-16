@@ -21,6 +21,7 @@ def render_codex_context(report: ProjectReport) -> str:
             "",
             f"- Name: {report.summary.name}",
             f"- Path: `{report.summary.path}`",
+            f"- Profile: {report.summary.profile or 'default'}",
             f"- Detected stack: {', '.join(report.summary.detected_stack) or 'Unknown'}",
             f"- Health score: {report.summary.health_score} / 100",
             f"- Documentation score: {report.docs.documentation_score} / 100",

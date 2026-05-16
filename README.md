@@ -123,7 +123,7 @@ historical_doc_markers = ["decision-log"]
 backlog_doc_markers = ["active-plan", "next-steps"]
 ```
 
-When `profile = "custom"` is set, health scoring uses custom-oriented signals and does not penalize missing package files, package test commands, or CI workflows by default.
+When `profile = "custom"` is set, health scoring uses custom-oriented signals and does not penalize missing package files, package test commands, or CI workflows by default. The active profile is included in summaries, markdown context, and scan history as structured metadata.
 
 ## Release Notes
 

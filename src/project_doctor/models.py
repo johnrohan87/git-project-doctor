@@ -84,17 +84,19 @@ class TestCiReport(BaseModel):
 class RepoSummary(BaseModel):
     path: Path
     name: str
+    profile: str | None = None
     detected_stack: list[str] = Field(default_factory=list)
     recommended_next_steps: list[str] = Field(default_factory=list)
     health_score: int = 0
 
 
 class ScanHistoryEntry(BaseModel):
-    schema_version: int = 1
+    schema_version: int = 2
     scanned_at: str
     repo_path: str
     repo_hash: str
     repo_name: str
+    profile: str | None = None
     branch: str | None = None
     is_git_repo: bool = False
     dirty: bool = False
@@ -119,6 +121,7 @@ class ScanHistoryDelta(BaseModel):
     dependency_file_count_delta: int = 0
     test_command_count_delta: int = 0
     ci_workflow_count_delta: int = 0
+    profile_changed: bool = False
     dirty_changed: bool = False
     branch_changed: bool = False
     stack_added: list[str] = Field(default_factory=list)

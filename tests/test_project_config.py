@@ -99,7 +99,8 @@ def test_custom_profile_uses_custom_health_and_recommendations(tmp_path):
 
     report = build_report(tmp_path)
 
-    assert "Profile: custom" in report.summary.detected_stack
+    assert report.summary.profile == "custom"
+    assert "Profile: custom" not in report.summary.detected_stack
     assert report.summary.health_score > 50
     assert "Confirm dependency management files are present or document the project type" not in report.summary.recommended_next_steps
     assert "Document or add a clear test command" not in report.summary.recommended_next_steps

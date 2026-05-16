@@ -22,7 +22,7 @@ def _slugify(value: str) -> str:
 
 
 def _is_custom_profile(report: ProjectReport) -> bool:
-    return "Profile: custom" in report.summary.detected_stack
+    return report.summary.profile == "custom"
 
 
 def _active_todos(report: ProjectReport):

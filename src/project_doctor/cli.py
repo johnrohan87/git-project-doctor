@@ -145,14 +145,11 @@ def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectRep
     structure = scan_structure(repo_path)
     test_ci = scan_test_ci(repo_path)
 
-    detected_stack = list(structure.project_types)
-    if config.profile:
-        detected_stack.append(f"Profile: {config.profile}")
-
     summary = RepoSummary(
         path=repo_path,
         name=repo_path.name,
-        detected_stack=detected_stack,
+        profile=config.profile,
+        detected_stack=structure.project_types,
     )
     report = ProjectReport(
         summary=summary,
@@ -341,6 +338,7 @@ def history_command(
         table.add_row("Dependency file count", f"{delta.dependency_file_count_delta:+d}")
         table.add_row("Test command count", f"{delta.test_command_count_delta:+d}")
         table.add_row("CI workflow count", f"{delta.ci_workflow_count_delta:+d}")
+        table.add_row("Profile changed", str(delta.profile_changed))
         table.add_row("Dirty changed", str(delta.dirty_changed))
         table.add_row("Branch changed", str(delta.branch_changed))
         table.add_row("Stack added", "\n".join(delta.stack_added) or "None")
@@ -353,6 +351,7 @@ def history_command(
     table = Table(title=f"Scan History ({len(entries)})")
     table.add_column("Scanned At")
     table.add_column("Health")
+    table.add_column("Profile")
     table.add_column("Docs")
     table.add_column("TODOs")
     table.add_column("Secrets")
@@ -363,6 +362,7 @@ def history_command(
         table.add_row(
             entry.scanned_at,
             str(entry.health_score),
+            entry.profile or "",
             str(entry.documentation_score),
             str(entry.todo_count),
             str(entry.possible_secret_count),
@@ -371,7 +371,7 @@ def history_command(
         )
 
     if not entries:
-        table.add_row("No history found", "", "", "", "", "", "")
+        table.add_row("No history found", "", "", "", "", "", "", "")
     console.print(table)
 
 

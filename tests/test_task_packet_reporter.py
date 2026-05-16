@@ -44,7 +44,7 @@ def test_build_task_packets_from_findings():
 
 def test_custom_profile_task_packets_skip_generic_package_tasks():
     report = _report()
-    report.summary.detected_stack = ["Profile: custom"]
+    report.summary.profile = "custom"
     report.todos = [
         TodoItem(file="docs/current-status.md", line=3, tag="TODO", text="TODO: finish rollout", category="backlog"),
         TodoItem(file="tmp/export.json", line=1, tag="TODO", text="TODO generated", category="generated"),

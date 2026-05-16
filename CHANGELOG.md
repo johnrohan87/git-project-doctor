@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Reduced possible-secret false positives for token variable syntax and endpoint/control-flag references.
 - Added severity and reason classification for possible secret findings.
 - Reduced scan noise by ignoring local `.tools` cache/state prefixes.
 - Added latest-scan comparison with `project-doctor history PATH --diff`.

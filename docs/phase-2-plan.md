@@ -96,6 +96,8 @@ Initial rules:
 - source code assignments are medium severity
 - documentation examples are low severity
 - token/cache path variables are low severity
+- code syntax references such as type annotations, arrow parameters, endpoint template constants, and refresh-token control flags are ignored as false positives
+- known non-secret token-like names such as `monthTokens` are ignored as false positives
 
 ## Documentation Review Signals
 

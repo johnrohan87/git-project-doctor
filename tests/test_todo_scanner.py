@@ -108,3 +108,37 @@ def test_scan_secrets_classifies_code_assignments_as_medium_severity(tmp_path):
     assert len(findings) == 1
     assert findings[0].severity == "medium"
     assert findings[0].reason == "secret-like code assignment or configuration reference"
+
+
+def test_scan_secrets_ignores_token_variable_code_references(tmp_path):
+    (tmp_path / "script.py").write_text(
+        "\n".join(
+            [
+                "def __init__(self, token: str):",
+                "force_refresh_token=False,",
+                "TOKEN_ENDPOINT_TEMPLATE = 'https://login.example.test/token'",
+                "monthTokens = ['jan', 'feb', 'mar']",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "script.js").write_text(
+        "\n".join(
+            [
+                "const hasMonth = monthTokens.some(token => lowered.includes(token));",
+                "function inspect(token) { return token; }",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    assert scan_secrets(tmp_path) == []
+
+
+def test_scan_secrets_still_flags_real_code_token_assignment(tmp_path):
+    (tmp_path / "script.py").write_text("access_token='real-looking-value'\n", encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert len(findings) == 1
+    assert findings[0].key == "access_token"

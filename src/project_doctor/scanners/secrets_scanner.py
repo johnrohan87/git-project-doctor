@@ -37,6 +37,18 @@ CACHE_OR_PATH_KEYS = (
     "cache_path",
     "path",
 )
+CONTROL_FLAG_KEYS = (
+    "force_refresh_token",
+    "use_token_cache",
+)
+KNOWN_NON_SECRET_KEYS = {
+    "monthtokens",
+}
+LOW_SEVERITY_SUFFIXES = (
+    "_endpoint",
+    "_endpoint_template",
+    "_url",
+)
 CODE_REFERENCE_SUFFIXES = (
     ".py",
     ".js",
@@ -64,11 +76,41 @@ def _is_placeholder(value: str) -> bool:
     return normalized.startswith(("your-", "example-", "sample-", "dummy-", "fake-"))
 
 
+def _is_code_reference_false_positive(path: Path, line: str, key: str, value: str) -> bool:
+    stripped = line.strip()
+    key_lower = key.lower()
+    value_clean = value.strip().strip("'\"")
+    suffix = path.suffix.lower()
+
+    if key_lower in KNOWN_NON_SECRET_KEYS:
+        return True
+    if key_lower in CONTROL_FLAG_KEYS:
+        return True
+    if key_lower.endswith(LOW_SEVERITY_SUFFIXES):
+        return True
+    if suffix in CODE_REFERENCE_SUFFIXES and re.search(
+        rf"\b{re.escape(key)}\s*:\s*[A-Za-z_][A-Za-z0-9_\[\] |.]*[,)=]?",
+        stripped,
+    ):
+        return True
+    if re.search(rf"\b{re.escape(key)}\s*=>", stripped):
+        return True
+    if re.search(rf"\bfunction\s*\([^)]*\b{re.escape(key)}\b", stripped):
+        return True
+    if value_clean.startswith((">", "=>")):
+        return True
+    return False
+
+
 def _classify(path: Path, key: str) -> tuple[str, str]:
     key_lower = key.lower()
     suffix = path.suffix.lower()
     if suffix in DOC_SUFFIXES:
         return "low", "documentation example or note"
+    if key_lower in CONTROL_FLAG_KEYS:
+        return "low", "token-related control flag"
+    if key_lower.endswith(LOW_SEVERITY_SUFFIXES):
+        return "low", "endpoint or URL template reference"
     if any(token in key_lower for token in CACHE_OR_PATH_KEYS):
         return "low", "token/cache path or configuration reference"
     if suffix in CODE_REFERENCE_SUFFIXES:
@@ -88,7 +130,8 @@ def scan_secrets(repo_path: Path) -> list[SecretFinding]:
             if not match:
                 continue
             key = match.group("key")
-            if _is_placeholder(match.group("value")):
+            value = match.group("value")
+            if _is_placeholder(value) or _is_code_reference_false_positive(path, line, key, value):
                 continue
             severity, reason = _classify(path, key)
             findings.append(

@@ -55,6 +55,16 @@ class StructureReport(BaseModel):
     important_files: list[str] = Field(default_factory=list)
 
 
+class TestCiReport(BaseModel):
+    test_runners: list[str] = Field(default_factory=list)
+    test_commands: list[str] = Field(default_factory=list)
+    package_script_commands: dict[str, str] = Field(default_factory=dict)
+    ci_workflows: list[str] = Field(default_factory=list)
+    docker_files: list[str] = Field(default_factory=list)
+    config_files: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
 class RepoSummary(BaseModel):
     path: Path
     name: str
@@ -71,6 +81,7 @@ class ProjectReport(BaseModel):
     todos: list[TodoItem] = Field(default_factory=list)
     secrets: list[SecretFinding] = Field(default_factory=list)
     structure: StructureReport
+    test_ci: TestCiReport = Field(default_factory=TestCiReport)
 
     def to_jsonable(self) -> dict[str, Any]:
         return self.model_dump(mode="json")

@@ -125,6 +125,57 @@ def build_task_packets(report: ProjectReport) -> list[TaskPacket]:
             )
         )
 
+    if not report.test_ci.test_commands:
+        packets.append(
+            TaskPacket(
+                slug="define-local-test-command",
+                title="Define local test command",
+                context=[
+                    f"This repo appears to be: {stack}.",
+                    "No obvious local test command was detected.",
+                    f"Detected config files: {', '.join(report.test_ci.config_files) or 'none'}.",
+                    f"Package scripts detected: {', '.join(report.dependencies.scripts) or 'none'}.",
+                ],
+                rules=[
+                    "Start by identifying the intended test framework.",
+                    "Do not install dependencies or change lockfiles without approval.",
+                    "Prefer documenting an existing command before adding a new tool.",
+                    "Do not commit unless explicitly requested.",
+                ],
+                acceptance=[
+                    "The repo has a clear local test command.",
+                    "The command is documented in README or package metadata.",
+                    "The command can be run by a future coding agent before and after changes.",
+                ],
+            )
+        )
+
+    if report.test_ci.test_commands and not report.test_ci.ci_workflows:
+        packets.append(
+            TaskPacket(
+                slug="add-ci-workflow-plan",
+                title="Plan GitHub Actions workflow",
+                context=[
+                    f"This repo appears to be: {stack}.",
+                    "No GitHub Actions workflow was detected.",
+                    "Detected local test commands:",
+                    *report.test_ci.test_commands,
+                ],
+                rules=[
+                    "Prepare a CI plan before adding workflow files.",
+                    "Do not add secrets to workflow files.",
+                    "Do not enable deployment steps without explicit approval.",
+                    "Keep the first workflow focused on install and test only.",
+                ],
+                acceptance=[
+                    "The intended CI trigger is clear.",
+                    "The install command is identified.",
+                    "The test command is identified.",
+                    "Deployment and publishing are explicitly out of scope.",
+                ],
+            )
+        )
+
     if report.git.dirty:
         packets.append(
             TaskPacket(

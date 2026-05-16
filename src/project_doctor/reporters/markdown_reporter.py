@@ -25,6 +25,10 @@ def render_project_report(report: ProjectReport) -> str:
         f"- `{item.file}:{item.line}` `{item.key}` {item.redacted_text}"
         for item in report.secrets[:50]
     ]
+    script_lines = [
+        f"- `{name}`: `{command}`"
+        for name, command in report.test_ci.package_script_commands.items()
+    ]
 
     return "\n".join(
         [
@@ -63,6 +67,23 @@ def render_project_report(report: ProjectReport) -> str:
             "",
             _list(deps_found),
             "",
+            "## Test and CI Detection",
+            "",
+            "Test runners:",
+            _list(report.test_ci.test_runners),
+            "",
+            "Recommended test commands:",
+            _list(report.test_ci.test_commands),
+            "",
+            "Package test/check scripts:",
+            "\n".join(script_lines) if script_lines else "- None detected",
+            "",
+            "CI workflows:",
+            _list(report.test_ci.ci_workflows),
+            "",
+            "Docker files:",
+            _list(report.test_ci.docker_files),
+            "",
             "## TODO / FIXME Items",
             "",
             "\n".join(todo_lines) if todo_lines else "- None detected",
@@ -99,6 +120,8 @@ def render_repo_summary(report: ProjectReport) -> str:
             f"- Git dirty: {_yes_no(report.git.dirty)}",
             f"- TODO/FIXME count: {len(report.todos)}",
             f"- Possible secret warnings: {len(report.secrets)}",
+            f"- Test commands detected: {len(report.test_ci.test_commands)}",
+            f"- CI workflows detected: {len(report.test_ci.ci_workflows)}",
             "",
             "## Recommended Next Steps",
             "",

@@ -13,6 +13,7 @@
 - Recommended next steps
 - Codex/Cline context file
 - Codex/Cline task packets
+- Test runner, CI workflow, and Dockerfile detection
 
 ## Install Locally
 
@@ -31,6 +32,7 @@ project-doctor scan . --out ./reports
 project-doctor git-status .
 project-doctor todos .
 project-doctor docs .
+project-doctor test-ci .
 project-doctor codex-context .
 project-doctor task-packets .
 ```
@@ -45,6 +47,7 @@ reports/
 ├── dependency_report.json
 ├── todo_report.json
 ├── git_status_report.json
+├── test_ci_report.json
 ├── repo_summary.json
 ├── repo_summary.md
 ├── codex_context.md

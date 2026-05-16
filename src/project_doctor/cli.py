@@ -17,6 +17,7 @@ from project_doctor.scanners.docs_scanner import scan_docs
 from project_doctor.scanners.git_scanner import scan_git
 from project_doctor.scanners.secrets_scanner import scan_secrets
 from project_doctor.scanners.structure_scanner import scan_structure
+from project_doctor.scanners.test_ci_scanner import scan_test_ci
 from project_doctor.scanners.todo_scanner import scan_todos
 from project_doctor.utils.path_utils import resolve_repo_path
 
@@ -42,6 +43,10 @@ def _recommended_next_steps(report: ProjectReport) -> list[str]:
         steps.append("Review modified and untracked files before starting update work")
     if not report.dependencies.files_found:
         steps.append("Confirm dependency management files are present or document the project type")
+    if not report.test_ci.test_commands:
+        steps.append("Document or add a clear test command")
+    if not report.test_ci.ci_workflows:
+        steps.append("Consider adding a CI workflow after the local test command is confirmed")
     if not steps:
         steps.append("No urgent Phase 1 issues detected; consider adding deeper test and CI review in Phase 2")
     return steps
@@ -61,6 +66,10 @@ def _health_score(report: ProjectReport) -> int:
         score -= 10
     if not report.dependencies.files_found:
         score -= 10
+    if not report.test_ci.test_commands:
+        score -= 10
+    if not report.test_ci.ci_workflows:
+        score -= 5
     score -= min(len(report.todos), 20)
     score -= min(len(report.secrets) * 10, 30)
     return max(0, min(100, score))
@@ -73,6 +82,7 @@ def build_report(repo_path: Path) -> ProjectReport:
     todos = scan_todos(repo_path)
     secrets = scan_secrets(repo_path)
     structure = scan_structure(repo_path)
+    test_ci = scan_test_ci(repo_path)
 
     summary = RepoSummary(
         path=repo_path,
@@ -87,6 +97,7 @@ def build_report(repo_path: Path) -> ProjectReport:
         todos=todos,
         secrets=secrets,
         structure=structure,
+        test_ci=test_ci,
     )
     report.summary.health_score = _health_score(report)
     report.summary.recommended_next_steps = _recommended_next_steps(report)
@@ -164,6 +175,25 @@ def docs(path: str = typer.Argument(..., help="Repository path to inspect.")) ->
     table.add_row("docs/ folder", str(report.has_docs_folder))
     table.add_row("Setup keywords", ", ".join(report.setup_keywords_found) or "None")
     table.add_row("Commands documented", str(report.documents_package_scripts_or_commands))
+    console.print(table)
+
+
+@app.command("test-ci")
+def test_ci(path: str = typer.Argument(..., help="Repository path to inspect.")) -> None:
+    """Detect test runners, test commands, CI workflows, and Docker files."""
+    report = scan_test_ci(_validate_path(path))
+    table = Table(title="Test and CI Detection")
+    table.add_column("Field")
+    table.add_column("Value")
+    table.add_row("Test runners", "\n".join(report.test_runners) or "None")
+    table.add_row("Test commands", "\n".join(report.test_commands) or "None")
+    table.add_row(
+        "Package scripts",
+        "\n".join(f"{name}: {command}" for name, command in report.package_script_commands.items()) or "None",
+    )
+    table.add_row("CI workflows", "\n".join(report.ci_workflows) or "None")
+    table.add_row("Docker files", "\n".join(report.docker_files) or "None")
+    table.add_row("Config files", "\n".join(report.config_files) or "None")
     console.print(table)
 
 

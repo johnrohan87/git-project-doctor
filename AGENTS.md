@@ -103,6 +103,7 @@ project-doctor scan PATH
 project-doctor git-status PATH
 project-doctor todos PATH
 project-doctor docs PATH
+project-doctor test-ci PATH
 project-doctor codex-context PATH
 project-doctor task-packets PATH
 ```

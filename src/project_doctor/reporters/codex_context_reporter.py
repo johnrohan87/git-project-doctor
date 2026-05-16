@@ -8,6 +8,8 @@ from project_doctor.models import ProjectReport
 def render_codex_context(report: ProjectReport) -> str:
     scripts = report.dependencies.scripts
     script_lines = [f"- `{name}`: `{command}`" for name, command in scripts.items()]
+    test_command_lines = [f"- `{command}`" for command in report.test_ci.test_commands]
+    ci_lines = [f"- `{workflow}`" for workflow in report.test_ci.ci_workflows]
     modified = [f"- {item}" for item in report.git.modified_files[:30]]
     untracked = [f"- {item}" for item in report.git.untracked_files[:30]]
 
@@ -33,6 +35,17 @@ def render_codex_context(report: ProjectReport) -> str:
             "## Package Scripts",
             "",
             "\n".join(script_lines) if script_lines else "- None detected",
+            "",
+            "## Test and CI",
+            "",
+            f"- Test runners: {', '.join(report.test_ci.test_runners) or 'None detected'}",
+            f"- Docker files: {', '.join(report.test_ci.docker_files) or 'None detected'}",
+            "",
+            "Recommended test commands:",
+            "\n".join(test_command_lines) if test_command_lines else "- None detected",
+            "",
+            "CI workflows:",
+            "\n".join(ci_lines) if ci_lines else "- None detected",
             "",
             "## Current Git Status",
             "",

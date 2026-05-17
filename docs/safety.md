@@ -22,9 +22,15 @@
 
 ## Output Directory Rule
 
-The default output directory is `./reports`, relative to the current working directory where the CLI is run. A user may choose another location with `--out`.
+The default output directory is outside the scanned repository:
 
-The scanner does not write into the scanned repository unless the user explicitly chooses an output path inside that repository.
+```text
+~/.local/share/git-project-doctor/reports/<repo-name>-<repo-hash>
+```
+
+If `XDG_DATA_HOME` is set, that directory is used instead of `~/.local/share`.
+
+The scanner does not write into the scanned repository unless the user explicitly chooses an output path inside that repository with `--out`. In that case, the command is allowed and prints a warning because generated reports may appear as Git changes.
 
 ## Secret Handling
 

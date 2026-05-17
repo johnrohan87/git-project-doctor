@@ -3,9 +3,26 @@ from __future__ import annotations
 from pathlib import Path
 
 from project_doctor.models import ProjectReport
+from project_doctor.reporters.finding_summary import build_findings_summary
+
+
+def _numbered(items: list[str]) -> str:
+    if not items:
+        return "1. None detected"
+    return "\n".join(f"{idx}. {item}" for idx, item in enumerate(items, start=1))
+
+
+def _render_top_risks(risks: list[dict[str, str]]) -> str:
+    if not risks:
+        return "- No urgent Phase 1 risks detected."
+    return "\n".join(
+        f"- {item['risk']} | confidence: {item['confidence']} | action: {item['next_action']}"
+        for item in risks
+    )
 
 
 def render_codex_context(report: ProjectReport) -> str:
+    findings_summary = build_findings_summary(report)
     scripts = report.dependencies.scripts
     script_lines = [f"- `{name}`: `{command}`" for name, command in scripts.items()]
     test_command_lines = [f"- `{command}`" for command in report.test_ci.test_commands]
@@ -25,6 +42,14 @@ def render_codex_context(report: ProjectReport) -> str:
             f"- Detected stack: {', '.join(report.summary.detected_stack) or 'Unknown'}",
             f"- Health score: {report.summary.health_score} / 100",
             f"- Documentation score: {report.docs.documentation_score} / 100",
+            "",
+            "## Top Risks",
+            "",
+            _render_top_risks(findings_summary["top_risks"]),
+            "",
+            "## Top Next Actions",
+            "",
+            _numbered(findings_summary["top_next_actions"]),
             "",
             "## Important Files",
             "",
@@ -70,7 +95,7 @@ def render_codex_context(report: ProjectReport) -> str:
             "",
             "## Recommended Next Steps",
             "",
-            "\n".join(f"{idx}. {step}" for idx, step in enumerate(report.summary.recommended_next_steps, start=1)),
+            _numbered(report.summary.recommended_next_steps),
             "",
         ]
     )

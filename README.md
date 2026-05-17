@@ -43,7 +43,7 @@ project-doctor history .
 By default, `project-doctor scan PATH` writes:
 
 ```text
-reports/
+~/.local/share/git-project-doctor/reports/<repo-name>-<repo-hash>/
 ├── project_report.md
 ├── dependency_report.json
 ├── docs_report.json
@@ -59,6 +59,8 @@ reports/
     └── 01-example-task.md
 ```
 
+Use `--out PATH` to choose a different report directory. If that path is inside the scanned repository, `project-doctor` allows it and prints a warning because generated reports may appear as Git changes.
+
 ## Phase 1 Limitations
 
 - No dependency freshness checks against the internet
@@ -71,7 +73,7 @@ reports/
 
 ## Task Packets
 
-`project-doctor task-packets PATH` generates scoped Markdown prompts for Codex or Cline. Packets are based on scan findings, include task-specific rules, and are written under `reports/task_packets/`.
+`project-doctor task-packets PATH` generates scoped Markdown prompts for Codex or Cline. Packets are based on scan findings, include task-specific rules, and are written under the selected output directory's `task_packets/` folder.
 
 The generator remains read-only with respect to the scanned repository.
 
@@ -125,7 +127,7 @@ backlog_doc_markers = ["active-plan", "next-steps"]
 ignored_path_prefixes = ["public", "data/generated"]
 ```
 
-Use an external `--out` path when scanning active work repos to keep the scanned repo unchanged:
+The default report path is already outside the scanned repository. Use `--out` when you want a specific location:
 
 ```bash
 project-doctor scan ~/Documents/VSCodeProjects/example-project \

@@ -62,3 +62,7 @@ def test_write_json_reports_includes_docs_and_redacted_secrets(tmp_path):
     assert findings_summary["possible_secrets"]["total"] == 1
     assert findings_summary["possible_secrets"]["by_severity"] == {"medium": 1}
     assert findings_summary["possible_secrets"]["top_files"] == [{"count": 1, "file": ".env"}]
+    assert findings_summary["top_risks"][0]["risk"] == "Possible secret in .env:1"
+    assert findings_summary["top_risks"][0]["confidence"] == "medium"
+    assert findings_summary["top_risks"][0]["false_positive_hint"]
+    assert findings_summary["top_next_actions"]

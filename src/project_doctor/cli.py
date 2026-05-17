@@ -6,7 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from project_doctor.config import DEFAULT_OUTPUT_DIR
+from project_doctor.config import DEFAULT_OUTPUT_DIR, default_output_dir_for_repo
 from project_doctor.history import latest_history_delta, load_history, write_history_entry
 from project_doctor.models import ProjectReport, RepoSummary
 from project_doctor.models import ProjectDoctorConfig
@@ -116,17 +116,32 @@ def _validate_path(path: str) -> Path:
     return repo_path
 
 
+def _resolve_output_dir(repo_path: Path, out: Path | None) -> tuple[Path, bool]:
+    if out is None:
+        return default_output_dir_for_repo(repo_path).expanduser().resolve(), False
+    return out.expanduser().resolve(), True
+
+
+def _warn_if_explicit_output_inside_repo(repo_path: Path, out_dir: Path, explicit_out: bool) -> None:
+    if explicit_out and out_dir.is_relative_to(repo_path):
+        console.print(
+            "[yellow]Warning:[/yellow] --out points inside the scanned repository; "
+            "reports may appear as Git changes."
+        )
+
+
 @app.command()
 def scan(
     path: str = typer.Argument(..., help="Repository path to scan."),
-    out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory for reports."),
+    out: Path | None = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory for reports."),
     history: bool = typer.Option(True, "--history/--no-history", help="Record a local scan history entry."),
     history_dir: Path | None = typer.Option(None, "--history-dir", help="Directory for local scan history JSONL files."),
     config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Run all scanners and write reports."""
     repo_path = _validate_path(path)
-    out_dir = out.expanduser().resolve()
+    out_dir, explicit_out = _resolve_output_dir(repo_path, out)
+    _warn_if_explicit_output_inside_repo(repo_path, out_dir, explicit_out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     report = build_report(repo_path, config)
@@ -226,12 +241,13 @@ def test_ci(path: str = typer.Argument(..., help="Repository path to inspect."))
 @app.command("codex-context")
 def codex_context(
     path: str = typer.Argument(..., help="Repository path to scan."),
-    out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
+    out: Path | None = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
     config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Generate codex_context.md only."""
     repo_path = _validate_path(path)
-    out_dir = out.expanduser().resolve()
+    out_dir, explicit_out = _resolve_output_dir(repo_path, out)
+    _warn_if_explicit_output_inside_repo(repo_path, out_dir, explicit_out)
     out_dir.mkdir(parents=True, exist_ok=True)
     report = build_report(repo_path, config)
     write_codex_context(report, out_dir)
@@ -241,12 +257,13 @@ def codex_context(
 @app.command("task-packets")
 def task_packets(
     path: str = typer.Argument(..., help="Repository path to scan."),
-    out: Path = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
+    out: Path | None = typer.Option(DEFAULT_OUTPUT_DIR, "--out", "-o", help="Output directory."),
     config: Path | None = typer.Option(None, "--config", help="Optional project-doctor TOML config file."),
 ) -> None:
     """Generate Codex/Cline task packet Markdown files."""
     repo_path = _validate_path(path)
-    out_dir = out.expanduser().resolve()
+    out_dir, explicit_out = _resolve_output_dir(repo_path, out)
+    _warn_if_explicit_output_inside_repo(repo_path, out_dir, explicit_out)
     out_dir.mkdir(parents=True, exist_ok=True)
     report = build_report(repo_path, config)
     paths = write_task_packets(report, out_dir)

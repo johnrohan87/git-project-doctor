@@ -26,6 +26,19 @@ BACKLOG_DOC_MARKERS = (
     "todo",
     "transfer-status",
 )
+GENERATED_TODO_PATH_PREFIXES = (
+    ".next/",
+    "out/",
+    "public/build/",
+    "public/page-data/",
+    "public/static/",
+    "public/webpack-runtime",
+    "static/",
+)
+GENERATED_TODO_FILENAMES = {
+    "public/render-page.js",
+    "public/sw.js",
+}
 
 
 def _classify_todo(relative_path: str, tag: str) -> tuple[str, str, str]:
@@ -96,18 +109,25 @@ def _classify_todo_with_config(path_lower: str, tag_upper: str, config: ProjectD
     return category, priority, reason
 
 
+def _is_generated_todo_output(relative_path_lower: str) -> bool:
+    return relative_path_lower in GENERATED_TODO_FILENAMES or relative_path_lower.startswith(GENERATED_TODO_PATH_PREFIXES)
+
+
 def scan_todos(repo_path: Path, config: ProjectDoctorConfig | None = None) -> list[TodoItem]:
     active_config = config or ProjectDoctorConfig()
     items: list[TodoItem] = []
     for path in iter_files(repo_path):
+        relative_path = relative_to_repo(path, repo_path)
+        relative_path_lower = relative_path.lower()
+        if _is_generated_todo_output(relative_path_lower):
+            continue
         if not is_probably_text(path):
             continue
         for line_number, line in enumerate(read_text_safely(path).splitlines(), start=1):
             match = TAG_RE.search(line)
             if match:
-                relative_path = relative_to_repo(path, repo_path)
                 tag = match.group(1).upper()
-                category, priority, reason = _classify_todo_with_config(relative_path.lower(), tag, active_config)
+                category, priority, reason = _classify_todo_with_config(relative_path_lower, tag, active_config)
                 items.append(
                     TodoItem(
                         file=relative_path,

@@ -5,6 +5,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from project_doctor.cli import app
+from project_doctor.config import default_output_dir_for_repo
 
 
 runner = CliRunner()
@@ -46,6 +47,34 @@ def test_scan_writes_reports_to_custom_output_dir(tmp_path):
     assert list((out_dir / "task_packets").glob("*.md"))
     assert list(history_dir.glob("*.jsonl"))
     assert not (repo / "reports").exists()
+
+
+def test_scan_default_output_stays_outside_scanned_repo(tmp_path, monkeypatch):
+    repo = _sample_repo(tmp_path / "repo")
+    data_home = tmp_path / "data-home"
+    monkeypatch.setenv("XDG_DATA_HOME", str(data_home))
+    monkeypatch.chdir(repo)
+
+    result = runner.invoke(app, ["scan", ".", "--no-history"], catch_exceptions=False)
+
+    out_dir = default_output_dir_for_repo(repo).resolve()
+    assert result.exit_code == 0
+    assert "Wrote reports to" in result.output
+    assert (out_dir / "project_report.md").exists()
+    assert (out_dir / "repo_summary.json").exists()
+    assert not (repo / "reports").exists()
+
+
+def test_scan_allows_explicit_output_inside_scanned_repo_with_warning(tmp_path):
+    repo = _sample_repo(tmp_path / "repo")
+    out_dir = repo / "reports"
+
+    result = runner.invoke(app, ["scan", str(repo), "--out", str(out_dir), "--no-history"])
+
+    assert result.exit_code == 0
+    assert "Warning:" in result.output
+    assert "--out points inside the scanned repository" in result.output
+    assert (out_dir / "project_report.md").exists()
 
 
 def test_scan_report_redacts_secret_values(tmp_path):

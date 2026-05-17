@@ -3,7 +3,15 @@ from __future__ import annotations
 from pathlib import Path
 
 from project_doctor.models import ProjectReport
-from project_doctor.reporters.finding_summary import build_findings_summary, render_summary_items, render_top_files
+from project_doctor.reporters.finding_summary import (
+    build_findings_summary,
+    confidence_for_secret,
+    confidence_for_todo,
+    false_positive_hint_for_secret,
+    false_positive_hint_for_todo,
+    render_summary_items,
+    render_top_files,
+)
 
 
 def _yes_no(value: bool) -> str:
@@ -16,14 +24,36 @@ def _list(items: list[str], empty: str = "None detected") -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
+def _numbered(items: list[str], empty: str = "None detected") -> str:
+    if not items:
+        return f"1. {empty}"
+    return "\n".join(f"{idx}. {item}" for idx, item in enumerate(items, start=1))
+
+
+def _render_top_risks(risks: list[dict[str, str]]) -> str:
+    if not risks:
+        return "- No urgent Phase 1 risks detected."
+    return "\n".join(
+        "- "
+        f"{item['risk']} | evidence: {item['evidence']} | "
+        f"confidence: {item['confidence']} | action: {item['next_action']} "
+        f"Hint: {item['false_positive_hint']}"
+        for item in risks
+    )
+
+
 def render_project_report(report: ProjectReport) -> str:
     deps_found = report.dependencies.files_found + report.dependencies.package_manager_locks
     todo_lines = [
-        f"- `{item.file}:{item.line}` [{item.tag}] [{item.priority}/{item.category}] {item.reason}: {item.text}"
+        f"- `{item.file}:{item.line}` [{item.tag}] [{item.priority}/{item.category}; "
+        f"confidence: {confidence_for_todo(item)}] {item.reason}: {item.text} "
+        f"Hint: {false_positive_hint_for_todo(item)}"
         for item in report.todos[:50]
     ]
     secret_lines = [
-        f"- `{item.file}:{item.line}` `{item.key}` [{item.severity}] {item.reason}: {item.redacted_text}"
+        f"- `{item.file}:{item.line}` `{item.key}` [{item.severity}; "
+        f"confidence: {confidence_for_secret(item)}] {item.reason}: {item.redacted_text} "
+        f"Hint: {false_positive_hint_for_secret(item)}"
         for item in report.secrets[:50]
     ]
     findings_summary = build_findings_summary(report)
@@ -44,6 +74,14 @@ def render_project_report(report: ProjectReport) -> str:
             f"- Git branch: {report.git.branch or 'Unknown'}",
             f"- Dirty working tree: {_yes_no(report.git.dirty)}",
             f"- Remote origin: {report.git.remote_origin or 'None detected'}",
+            "",
+            "## Top Risks",
+            "",
+            _render_top_risks(findings_summary["top_risks"]),
+            "",
+            "## Top Next Actions",
+            "",
+            _numbered(findings_summary["top_next_actions"]),
             "",
             "## Health Score",
             "",
@@ -130,13 +168,14 @@ def render_project_report(report: ProjectReport) -> str:
             "",
             "## Recommended Next Steps",
             "",
-            "\n".join(f"{idx}. {step}" for idx, step in enumerate(report.summary.recommended_next_steps, start=1)),
+            _numbered(report.summary.recommended_next_steps),
             "",
         ]
     )
 
 
 def render_repo_summary(report: ProjectReport) -> str:
+    findings_summary = build_findings_summary(report)
     return "\n".join(
         [
             "# Repo Summary",
@@ -152,9 +191,13 @@ def render_repo_summary(report: ProjectReport) -> str:
             f"- Test commands detected: {len(report.test_ci.test_commands)}",
             f"- CI workflows detected: {len(report.test_ci.ci_workflows)}",
             "",
-            "## Recommended Next Steps",
+            "## Top Risks",
             "",
-            "\n".join(f"{idx}. {step}" for idx, step in enumerate(report.summary.recommended_next_steps, start=1)),
+            _render_top_risks(findings_summary["top_risks"]),
+            "",
+            "## Top Next Actions",
+            "",
+            _numbered(findings_summary["top_next_actions"]),
             "",
         ]
     )

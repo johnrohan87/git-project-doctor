@@ -43,6 +43,7 @@ CONTROL_FLAG_KEYS = (
 )
 KNOWN_NON_SECRET_KEYS = {
     "monthtokens",
+    "reactproptypessecret",
 }
 LOW_SEVERITY_SUFFIXES = (
     "_endpoint",
@@ -91,6 +92,12 @@ def _is_code_reference_false_positive(path: Path, line: str, key: str, value: st
     if key_lower.endswith(LOW_SEVERITY_SUFFIXES):
         return True
     if suffix in CODE_REFERENCE_SUFFIXES and stripped.startswith(CODE_COMMENT_PREFIXES):
+        return True
+    if (
+        suffix in CODE_REFERENCE_SUFFIXES
+        and key_lower in {"secret", "token"}
+        and re.search(rf"\.[ \t]*{re.escape(key)}\b\s*[:=]", stripped, re.IGNORECASE)
+    ):
         return True
     if suffix in CODE_REFERENCE_SUFFIXES and re.search(rf"\bconsole\.[A-Za-z_]+\([^)]*\b{re.escape(key)}\b", stripped):
         return True
@@ -149,7 +156,7 @@ def scan_secrets(repo_path: Path, config: ProjectDoctorConfig | None = None) -> 
         relative_path = relative_to_repo(path, repo_path)
         if _is_config_ignored(relative_path, active_config):
             continue
-        if not is_probably_text(path):
+        if not (is_probably_text(path) or path.name.startswith(".env")):
             continue
         for line_number, line in enumerate(read_text_safely(path).splitlines(), start=1):
             match = SECRET_RE.search(line)

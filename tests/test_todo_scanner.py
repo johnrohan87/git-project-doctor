@@ -38,6 +38,29 @@ def test_scan_todos_ignores_local_tool_state_prefixes(tmp_path):
     assert [(item.file, item.line, item.tag) for item in items] == [("src/app.py", 1, "TODO")]
 
 
+def test_scan_todos_ignores_generated_gatsby_public_outputs(tmp_path):
+    src = tmp_path / "src"
+    page_data = tmp_path / "public" / "page-data" / "app"
+    public_static = tmp_path / "public" / "static"
+    public_docs = tmp_path / "public" / "docs"
+    src.mkdir()
+    page_data.mkdir(parents=True)
+    public_static.mkdir(parents=True)
+    public_docs.mkdir(parents=True)
+    (src / "app.py").write_text("# TODO: keep source follow-up\n", encoding="utf-8")
+    (page_data / "page-data.json").write_text('{"html":"TODO generated page copy"}\n', encoding="utf-8")
+    (tmp_path / "public" / "render-page.js").write_text("// FIXME generated Gatsby renderer\n", encoding="utf-8")
+    (public_static / "bundle.js").write_text("// TODO generated webpack bundle\n", encoding="utf-8")
+    (public_docs / "readme.txt").write_text("TODO: authored public doc\n", encoding="utf-8")
+
+    items = scan_todos(tmp_path)
+
+    assert sorted((item.file, item.line, item.tag) for item in items) == [
+        ("public/docs/readme.txt", 1, "TODO"),
+        ("src/app.py", 1, "TODO"),
+    ]
+
+
 def test_scan_todos_classifies_docs_scripts_and_tests(tmp_path):
     docs = tmp_path / "docs"
     scripts = tmp_path / "scripts"
@@ -219,6 +242,32 @@ def test_scan_secrets_ignores_token_variable_code_references(tmp_path):
     assert scan_secrets(tmp_path) == []
 
 
+def test_scan_secrets_ignores_react_internal_secret_marker(tmp_path):
+    (tmp_path / "bundle.js").write_text(
+        "var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';\n",
+        encoding="utf-8",
+    )
+
+    assert scan_secrets(tmp_path) == []
+
+
+def test_scan_secrets_ignores_member_state_token_assignments(tmp_path):
+    (tmp_path / "reducer.ts").write_text(
+        "\n".join(
+            [
+                'state.token = "loaded";',
+                'this.secret = "visible-ui-state";',
+                'state.password = "keep-flagged";',
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    findings = scan_secrets(tmp_path)
+
+    assert [(item.file, item.key) for item in findings] == [("reducer.ts", "password")]
+
+
 def test_scan_secrets_still_flags_real_code_token_assignment(tmp_path):
     (tmp_path / "script.py").write_text("access_token='real-looking-value'\n", encoding="utf-8")
 
@@ -226,3 +275,13 @@ def test_scan_secrets_still_flags_real_code_token_assignment(tmp_path):
 
     assert len(findings) == 1
     assert findings[0].key == "access_token"
+
+
+def test_scan_secrets_still_flags_real_config_token_assignment(tmp_path):
+    (tmp_path / ".env").write_text("TOKEN=real-looking-token-value\n", encoding="utf-8")
+
+    findings = scan_secrets(tmp_path)
+
+    assert len(findings) == 1
+    assert findings[0].key == "TOKEN"
+    assert findings[0].severity == "high"

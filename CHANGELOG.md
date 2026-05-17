@@ -4,6 +4,8 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+## 0.2.0 - 2026-05-17
+
 - Added example custom profile configs for Example Project, Example Project, and Example Project.
 - Added structured profile metadata to summaries, markdown context, and scan history.
 - Added custom-oriented health scoring for `profile = "custom"`.

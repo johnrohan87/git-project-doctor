@@ -33,6 +33,9 @@ def load_project_config(repo_path: Path, config_path: Path | None = None) -> Pro
     todos = raw.get("todos", {})
     if not isinstance(todos, dict):
         todos = {}
+    secrets = raw.get("secrets", {})
+    if not isinstance(secrets, dict):
+        secrets = {}
 
     return ProjectDoctorConfig(
         profile=str(raw["profile"]) if raw.get("profile") else None,
@@ -42,4 +45,6 @@ def load_project_config(repo_path: Path, config_path: Path | None = None) -> Pro
         + _string_list(todos.get("historical_doc_markers")),
         backlog_doc_markers=_string_list(raw.get("backlog_doc_markers"))
         + _string_list(todos.get("backlog_doc_markers")),
+        secret_ignored_path_prefixes=_string_list(raw.get("secret_ignored_path_prefixes"))
+        + _string_list(secrets.get("ignored_path_prefixes")),
     )

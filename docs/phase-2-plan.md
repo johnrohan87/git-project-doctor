@@ -134,6 +134,15 @@ backlog_doc_markers = ["active-plan"]
 
 Config is local-only and affects scanner classification; it does not permit modifying scanned repositories.
 
+Secret scanning can also ignore configured generated-artifact prefixes:
+
+```toml
+[secrets]
+ignored_path_prefixes = ["public", "data/generated"]
+```
+
+Use this for committed generated bundles, captured browser sessions, or local indexes that otherwise dominate possible-secret reports. Keep source files and hand-written configuration files in scope.
+
 ## custom Health Profile
 
 When `profile = "custom"` is configured, health scoring uses custom-oriented signals instead of generic package-app signals.

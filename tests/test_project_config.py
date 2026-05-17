@@ -14,6 +14,9 @@ profile = "custom"
 generated_path_prefixes = ["exports"]
 historical_doc_markers = ["work-log"]
 backlog_doc_markers = ["active-plan"]
+
+[secrets]
+ignored_path_prefixes = ["public/assets"]
 """.strip(),
         encoding="utf-8",
     )
@@ -24,6 +27,7 @@ backlog_doc_markers = ["active-plan"]
     assert config.generated_path_prefixes == ["exports"]
     assert config.historical_doc_markers == ["work-log"]
     assert config.backlog_doc_markers == ["active-plan"]
+    assert config.secret_ignored_path_prefixes == ["public/assets"]
 
 
 def test_load_project_config_from_explicit_file(tmp_path):
@@ -33,6 +37,7 @@ def test_load_project_config_from_explicit_file(tmp_path):
 [project_doctor]
 profile = "custom"
 generated_path_prefixes = ["snapshots"]
+secret_ignored_path_prefixes = ["generated"]
 """.strip(),
         encoding="utf-8",
     )
@@ -41,6 +46,7 @@ generated_path_prefixes = ["snapshots"]
 
     assert config.profile == "custom"
     assert config.generated_path_prefixes == ["snapshots"]
+    assert config.secret_ignored_path_prefixes == ["generated"]
 
 
 def test_scan_todos_uses_project_config_classification(tmp_path):

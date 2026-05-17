@@ -54,6 +54,7 @@ class ProjectDoctorConfig(BaseModel):
     generated_path_prefixes: list[str] = Field(default_factory=list)
     historical_doc_markers: list[str] = Field(default_factory=list)
     backlog_doc_markers: list[str] = Field(default_factory=list)
+    secret_ignored_path_prefixes: list[str] = Field(default_factory=list)
 
 
 class SecretFinding(BaseModel):

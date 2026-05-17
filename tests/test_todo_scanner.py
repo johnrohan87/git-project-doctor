@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from project_doctor.models import ProjectDoctorConfig
 from project_doctor.scanners.secrets_scanner import scan_secrets
 from project_doctor.scanners.todo_scanner import scan_todos
 
@@ -147,6 +148,19 @@ def test_scan_secrets_ignores_local_tool_binary_cache_prefixes(tmp_path):
     findings = scan_secrets(tmp_path)
 
     assert [(item.file, item.key) for item in findings] == [("config.yml", "API_KEY")]
+
+
+def test_scan_secrets_uses_config_ignored_path_prefixes(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "app.py").write_text("API_KEY='real-value'\n", encoding="utf-8")
+    ignored = tmp_path / "public" / "assets"
+    ignored.mkdir(parents=True)
+    (ignored / "bundle.js").write_text("TOKEN='generated-token-value'\n", encoding="utf-8")
+    config = ProjectDoctorConfig(secret_ignored_path_prefixes=["public"])
+
+    findings = scan_secrets(tmp_path, config)
+
+    assert [(item.file, item.key) for item in findings] == [("src/app.py", "API_KEY")]
 
 
 def test_scan_secrets_classifies_docs_and_cache_paths_as_low_severity(tmp_path):

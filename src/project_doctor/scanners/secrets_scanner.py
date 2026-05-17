@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from project_doctor.models import SecretFinding
+from project_doctor.models import ProjectDoctorConfig, SecretFinding
 from project_doctor.utils.file_utils import is_probably_text, iter_files, read_text_safely
 from project_doctor.utils.path_utils import relative_to_repo
 
@@ -120,9 +120,24 @@ def _classify(path: Path, key: str) -> tuple[str, str]:
     return "medium", "secret-like assignment"
 
 
-def scan_secrets(repo_path: Path) -> list[SecretFinding]:
+def _is_config_ignored(relative_path: str, config: ProjectDoctorConfig) -> bool:
+    path_lower = relative_path.lower()
+    for raw_prefix in config.secret_ignored_path_prefixes:
+        prefix = raw_prefix.strip().strip("/").lower()
+        if not prefix:
+            continue
+        if path_lower == prefix or path_lower.startswith(f"{prefix}/"):
+            return True
+    return False
+
+
+def scan_secrets(repo_path: Path, config: ProjectDoctorConfig | None = None) -> list[SecretFinding]:
+    active_config = config or ProjectDoctorConfig()
     findings: list[SecretFinding] = []
     for path in iter_files(repo_path):
+        relative_path = relative_to_repo(path, repo_path)
+        if _is_config_ignored(relative_path, active_config):
+            continue
         if not is_probably_text(path):
             continue
         for line_number, line in enumerate(read_text_safely(path).splitlines(), start=1):
@@ -136,7 +151,7 @@ def scan_secrets(repo_path: Path) -> list[SecretFinding]:
             severity, reason = _classify(path, key)
             findings.append(
                 SecretFinding(
-                    file=relative_to_repo(path, repo_path),
+                    file=relative_path,
                     line=line_number,
                     key=key,
                     redacted_text=_redact(line.strip(), key),

@@ -141,7 +141,7 @@ def build_report(repo_path: Path, config_path: Path | None = None) -> ProjectRep
     dependencies = scan_dependencies(repo_path)
     docs = scan_docs(repo_path)
     todos = scan_todos(repo_path, config)
-    secrets = scan_secrets(repo_path)
+    secrets = scan_secrets(repo_path, config)
     structure = scan_structure(repo_path)
     test_ci = scan_test_ci(repo_path)
 

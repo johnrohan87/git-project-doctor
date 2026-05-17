@@ -4,6 +4,8 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added config-driven secret scan ignored path prefixes for generated artifacts.
+
 ## 0.2.0 - 2026-05-17
 
 - Added example custom profile configs for Example Project, Example Project, and Example Project.

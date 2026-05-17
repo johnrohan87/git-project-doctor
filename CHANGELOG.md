@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added a public-content guard test to catch customer-specific notes before release.
 - Added grouped TODO and possible-secret summary output for large scan reports.
 - Reduced possible-secret false positives for token-handling source expressions, comments, JSX labels, and console log messages.
 - Added config-driven secret scan ignored path prefixes for generated artifacts.

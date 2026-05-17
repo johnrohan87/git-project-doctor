@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from project_doctor.models import ProjectReport
+from project_doctor.reporters.finding_summary import build_findings_summary
 
 
 def write_json(path: Path, model: BaseModel | list[BaseModel] | dict) -> None:
@@ -23,6 +24,7 @@ def write_json_reports(report: ProjectReport, out_dir: Path) -> None:
     write_json(out_dir / "docs_report.json", report.docs)
     write_json(out_dir / "todo_report.json", report.todos)
     write_json(out_dir / "secrets_report.json", report.secrets)
+    write_json(out_dir / "findings_summary.json", build_findings_summary(report))
     write_json(out_dir / "git_status_report.json", report.git)
     write_json(out_dir / "test_ci_report.json", report.test_ci)
     write_json(out_dir / "repo_summary.json", report.summary)

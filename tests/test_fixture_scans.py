@@ -16,6 +16,7 @@ REPORT_FILES = {
     "docs_report.json",
     "todo_report.json",
     "secrets_report.json",
+    "findings_summary.json",
     "git_status_report.json",
     "test_ci_report.json",
     "repo_summary.json",
@@ -67,6 +68,7 @@ def test_python_fixture_scan_generates_expected_reports_and_redacts_secrets(tmp_
     docs = _read_json(out_dir / "docs_report.json")
     todos = _read_json(out_dir / "todo_report.json")
     secrets = _read_json(out_dir / "secrets_report.json")
+    findings_summary = _read_json(out_dir / "findings_summary.json")
     test_ci = _read_json(out_dir / "test_ci_report.json")
 
     assert "FastAPI" in summary["detected_stack"]
@@ -97,6 +99,8 @@ def test_python_fixture_scan_generates_expected_reports_and_redacts_secrets(tmp_
             "severity": "medium",
         }
     ]
+    assert findings_summary["todos"]["top_files"] == [{"count": 1, "file": "src/app.py"}]
+    assert findings_summary["possible_secrets"]["by_severity"] == {"medium": 1}
 
     combined = "\n".join(path.read_text(encoding="utf-8") for path in out_dir.rglob("*") if path.is_file())
     assert "fixture-secret-value" not in combined
@@ -113,6 +117,7 @@ def test_node_fixture_scan_detects_stack_test_commands_and_ci(tmp_path):
     dependencies = _read_json(out_dir / "dependency_report.json")
     secrets = _read_json(out_dir / "secrets_report.json")
     todos = _read_json(out_dir / "todo_report.json")
+    findings_summary = _read_json(out_dir / "findings_summary.json")
     test_ci = _read_json(out_dir / "test_ci_report.json")
 
     assert {path.name for path in out_dir.iterdir() if path.is_file()} == REPORT_FILES
@@ -143,6 +148,8 @@ def test_node_fixture_scan_detects_stack_test_commands_and_ci(tmp_path):
             "reason": "source defect marker",
         }
     ]
+    assert findings_summary["todos"]["by_priority"] == {"high": 1}
+    assert findings_summary["possible_secrets"]["total"] == 0
 
 
 def test_fixture_subcommands_include_meaningful_detected_values(tmp_path):

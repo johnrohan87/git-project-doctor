@@ -49,6 +49,7 @@ reports/
 ├── docs_report.json
 ├── todo_report.json
 ├── secrets_report.json
+├── findings_summary.json
 ├── git_status_report.json
 ├── test_ci_report.json
 ├── repo_summary.json

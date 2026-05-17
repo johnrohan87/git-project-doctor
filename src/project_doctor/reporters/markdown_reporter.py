@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from project_doctor.models import ProjectReport
+from project_doctor.reporters.finding_summary import build_findings_summary, render_summary_items, render_top_files
 
 
 def _yes_no(value: bool) -> str:
@@ -25,6 +26,7 @@ def render_project_report(report: ProjectReport) -> str:
         f"- `{item.file}:{item.line}` `{item.key}` [{item.severity}] {item.reason}: {item.redacted_text}"
         for item in report.secrets[:50]
     ]
+    findings_summary = build_findings_summary(report)
     script_lines = [
         f"- `{name}`: `{command}`"
         for name, command in report.test_ci.package_script_commands.items()
@@ -91,10 +93,31 @@ def render_project_report(report: ProjectReport) -> str:
             "",
             "## TODO / FIXME Items",
             "",
+            f"Total: {findings_summary['todos']['total']}",
+            "",
+            "By category:",
+            render_summary_items(findings_summary["todos"]["by_category"]),
+            "",
+            "By priority:",
+            render_summary_items(findings_summary["todos"]["by_priority"]),
+            "",
+            "Top files:",
+            render_top_files(findings_summary["todos"]["top_files"]),
+            "",
+            "Details:",
             "\n".join(todo_lines) if todo_lines else "- None detected",
             "",
             "## Possible Secrets",
             "",
+            f"Total: {findings_summary['possible_secrets']['total']}",
+            "",
+            "By severity:",
+            render_summary_items(findings_summary["possible_secrets"]["by_severity"]),
+            "",
+            "Top files:",
+            render_top_files(findings_summary["possible_secrets"]["top_files"]),
+            "",
+            "Details:",
             "\n".join(secret_lines) if secret_lines else "- None detected",
             "",
             "## Project Structure",

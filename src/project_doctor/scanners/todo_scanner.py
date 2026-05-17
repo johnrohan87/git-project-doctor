@@ -21,7 +21,6 @@ BACKLOG_DOC_MARKERS = (
     "checklist",
     "current-status",
     "known-issues",
-    "migration",
     "next-steps",
     "readiness",
     "todo",
@@ -39,8 +38,6 @@ def _classify_todo_with_config(path_lower: str, tag_upper: str, config: ProjectD
     generated_prefixes = (
         "tmp/",
         "fixtures/",
-        "exports/",
-        "archived results/",
         *[prefix.lower().strip("/") + "/" for prefix in config.generated_path_prefixes],
     )
     historical_markers = (*HISTORICAL_DOC_MARKERS, *[marker.lower() for marker in config.historical_doc_markers])

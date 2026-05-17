@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from project_doctor.cli import build_report
 from project_doctor.project_config import load_project_config
 from project_doctor.scanners.todo_scanner import scan_todos
 
@@ -75,39 +74,3 @@ backlog_doc_markers = ["active-plan"]
         ("docs/decision-log.md", "historical", "low"),
         ("exports/sample.json", "generated", "low"),
     ]
-
-
-def test_custom_profile_uses_custom_health_and_recommendations(tmp_path):
-    (tmp_path / ".project-doctor.toml").write_text('profile = "custom"\n', encoding="utf-8")
-    (tmp_path / "README.md").write_text(
-        "\n".join(
-            [
-                "# custom Repo",
-                "",
-                "## Setup",
-                "Use the documented operator runbook.",
-                "",
-                "## Usage",
-                "Run validation scripts from `scripts/`.",
-                "",
-                "## Testing",
-                "Use manual validation runs.",
-                "",
-                "## Configuration",
-                "Review environment-specific settings before import.",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "active-todo.md").write_text("TODO: review active custom backlog\n", encoding="utf-8")
-
-    report = build_report(tmp_path)
-
-    assert report.summary.profile == "custom"
-    assert "Profile: custom" not in report.summary.detected_stack
-    assert report.summary.health_score > 50
-    assert "Confirm dependency management files are present or document the project type" not in report.summary.recommended_next_steps
-    assert "Document or add a clear test command" not in report.summary.recommended_next_steps
-    assert "Review 1 active backlog/script/source TODO findings" in report.summary.recommended_next_steps

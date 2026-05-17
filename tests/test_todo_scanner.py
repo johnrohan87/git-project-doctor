@@ -63,20 +63,20 @@ def test_scan_todos_classifies_docs_scripts_and_tests(tmp_path):
 def test_scan_todos_classifies_fixture_and_tmp_artifacts_as_low_priority(tmp_path):
     tmp_dir = tmp_path / "tmp"
     fixtures = tmp_path / "fixtures" / "form-submissions"
-    packages = tmp_path / "exports" / "export"
+    exports = tmp_path / "exports" / "package"
     tmp_dir.mkdir()
     fixtures.mkdir(parents=True)
-    packages.mkdir(parents=True)
+    exports.mkdir(parents=True)
     (tmp_dir / "backup.json").write_text('"note": "TODO archived planning note"\n', encoding="utf-8")
     (fixtures / "sample.json").write_text('"note": "TODO sample fixture"\n', encoding="utf-8")
-    (packages / "settings.json").write_text('"note": "FIXME exported package text"\n', encoding="utf-8")
+    (exports / "settings.json").write_text('"note": "FIXME exported package text"\n', encoding="utf-8")
 
-    items = scan_todos(tmp_path)
+    items = scan_todos(tmp_path, ProjectDoctorConfig(generated_path_prefixes=["exports"]))
 
-    assert [(item.file, item.category, item.priority, item.reason) for item in items] == [
-        ("tmp/backup.json", "generated", "low", "fixture, package, or temporary artifact"),
+    assert sorted((item.file, item.category, item.priority, item.reason) for item in items) == [
+        ("exports/package/settings.json", "generated", "low", "generated defect marker"),
         ("fixtures/form-submissions/sample.json", "generated", "low", "fixture, package, or temporary artifact"),
-        ("exports/export/settings.json", "generated", "low", "generated defect marker"),
+        ("tmp/backup.json", "generated", "low", "fixture, package, or temporary artifact"),
     ]
 
 
@@ -90,9 +90,9 @@ def test_scan_todos_splits_historical_and_backlog_docs(tmp_path):
     items = scan_todos(tmp_path)
 
     expected = [
-        ("docs/release-changelog.md", "historical", "low", "historical defect marker"),
         ("docs/active-todo.md", "backlog", "medium", "active backlog or planning document"),
         ("docs/feature-notes.md", "documentation", "low", "documentation note or backlog reference"),
+        ("docs/release-changelog.md", "historical", "low", "historical defect marker"),
     ]
     assert sorted((item.file, item.category, item.priority, item.reason) for item in items) == sorted(expected)
 

@@ -193,6 +193,7 @@ def test_scan_secrets_ignores_token_variable_code_references(tmp_path):
             [
                 "def __init__(self, token: str):",
                 "force_refresh_token=False,",
+                "access_token = os.environ.get('ACCESS_TOKEN')",
                 "TOKEN_ENDPOINT_TEMPLATE = 'https://login.example.test/token'",
                 "monthTokens = ['jan', 'feb', 'mar']",
             ]
@@ -202,6 +203,12 @@ def test_scan_secrets_ignores_token_variable_code_references(tmp_path):
     (tmp_path / "script.js").write_text(
         "\n".join(
             [
+                "// === ADMIN API KEYS + TEST TOKENS ===",
+                "const accessToken = await getAccessTokenSilently();",
+                "const handleGenerateToken = async () => {};",
+                "state.token = action.payload;",
+                "<p>Access Token: {token}</p>",
+                "console.error('Error fetching access token:', error);",
                 "const hasMonth = monthTokens.some(token => lowered.includes(token));",
                 "function inspect(token) { return token; }",
             ]

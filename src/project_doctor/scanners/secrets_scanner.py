@@ -61,6 +61,7 @@ CODE_REFERENCE_SUFFIXES = (
     ".sh",
 )
 DOC_SUFFIXES = (".md", ".txt")
+CODE_COMMENT_PREFIXES = ("//", "#", "/*", "*")
 
 
 def _redact(line: str, key: str) -> str:
@@ -79,6 +80,7 @@ def _is_placeholder(value: str) -> bool:
 def _is_code_reference_false_positive(path: Path, line: str, key: str, value: str) -> bool:
     stripped = line.strip()
     key_lower = key.lower()
+    value_stripped = value.strip()
     value_clean = value.strip().strip("'\"")
     suffix = path.suffix.lower()
 
@@ -87,6 +89,10 @@ def _is_code_reference_false_positive(path: Path, line: str, key: str, value: st
     if key_lower in CONTROL_FLAG_KEYS:
         return True
     if key_lower.endswith(LOW_SEVERITY_SUFFIXES):
+        return True
+    if suffix in CODE_REFERENCE_SUFFIXES and stripped.startswith(CODE_COMMENT_PREFIXES):
+        return True
+    if suffix in CODE_REFERENCE_SUFFIXES and re.search(rf"\bconsole\.[A-Za-z_]+\([^)]*\b{re.escape(key)}\b", stripped):
         return True
     if suffix in CODE_REFERENCE_SUFFIXES and re.search(
         rf"\b{re.escape(key)}\s*:\s*[A-Za-z_][A-Za-z0-9_\[\] |.]*[,)=]?",
@@ -97,6 +103,11 @@ def _is_code_reference_false_positive(path: Path, line: str, key: str, value: st
         return True
     if re.search(rf"\bfunction\s*\([^)]*\b{re.escape(key)}\b", stripped):
         return True
+    if suffix in CODE_REFERENCE_SUFFIXES and not value_stripped.startswith(("'", '"')):
+        if re.match(r"[A-Za-z_$][A-Za-z0-9_$.]*(?:[.(\[]|$)", value_clean):
+            return True
+        if value_clean.startswith(("{", "[", "(", "<", "/", ",", ")", "=>")):
+            return True
     if value_clean.startswith((">", "=>")):
         return True
     return False

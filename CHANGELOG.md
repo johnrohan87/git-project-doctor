@@ -4,6 +4,7 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Reduced possible-secret false positives for token-handling source expressions, comments, JSX labels, and console log messages.
 - Added config-driven secret scan ignored path prefixes for generated artifacts.
 
 ## 0.2.0 - 2026-05-17

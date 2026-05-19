@@ -60,7 +60,7 @@ History entries include summary metadata only:
 - CI workflow count
 - recommended next step text
 
-History entries must not include source file contents, TODO text, or secret values.
+History entries must not include source file contents, TODO text, secret values, or full local repository paths.
 
 Users may compare the latest two scans with:
 
@@ -176,6 +176,7 @@ These still require explicit approval before implementation:
 - Public documentation matches the shipped CLI behavior.
 - Generated reports never include unredacted possible secret values.
 - Default scans do not write into the target repository.
+- Local history entries do not expose full local repository paths.
 - Future-phase features that modify repositories, call APIs, or create GitHub resources remain behind explicit approval.
 
 Remaining phase work before a production-ready release:

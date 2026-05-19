@@ -4,6 +4,12 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+## 0.2.4 - 2026-05-19
+
+- Completed the Phase 2 local-analysis checklist.
+- Stopped writing full local repository paths into new scan history entries.
+- Added Phase 2 completion documentation and history privacy validation.
+
 ## 0.2.3 - 2026-05-19
 
 - Added a production-readiness review of remaining phase gates.

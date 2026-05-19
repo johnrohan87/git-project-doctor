@@ -30,7 +30,8 @@ def test_build_history_entry_contains_summary_without_findings(tmp_path):
     entry = build_history_entry(report)
 
     assert entry.repo_name == "repo"
-    assert entry.schema_version == 2
+    assert entry.schema_version == 3
+    assert entry.repo_path is None
     assert entry.profile is None
     assert entry.health_score == report.summary.health_score
     assert entry.documentation_score == report.docs.documentation_score
@@ -39,6 +40,7 @@ def test_build_history_entry_contains_summary_without_findings(tmp_path):
     assert entry.recommended_next_steps
     payload = entry.model_dump(mode="json")
     assert "TODO: test history" not in json.dumps(payload)
+    assert str(repo) not in json.dumps(payload)
 
 
 def test_build_history_entry_includes_profile(tmp_path):
@@ -61,10 +63,13 @@ def test_write_and_load_history_entries(tmp_path):
     path = write_history_entry(report, history_dir)
     write_history_entry(report, history_dir)
     entries = load_history(repo, history_dir)
+    payload = path.read_text(encoding="utf-8")
 
     assert path.parent == history_dir.resolve()
     assert len(entries) == 2
     assert all(entry.repo_hash == entries[0].repo_hash for entry in entries)
+    assert "repo_path" not in payload
+    assert str(repo) not in payload
 
 
 def test_scan_writes_history_and_history_command_displays_it(tmp_path):

@@ -92,6 +92,7 @@ See [docs/phase-1-completion.md](docs/phase-1-completion.md) for the completion 
 ## Phase 2
 
 Phase 2 begins with richer local documentation quality review while preserving read-only scanned-repo behavior. See [docs/phase-2-plan.md](docs/phase-2-plan.md).
+See [docs/phase-2-completion.md](docs/phase-2-completion.md) for the completed Phase 2 scope and production-readiness gates.
 
 `project-doctor scan PATH` also records summary-only scan history by default under:
 

@@ -92,9 +92,9 @@ class RepoSummary(BaseModel):
 
 
 class ScanHistoryEntry(BaseModel):
-    schema_version: int = 2
+    schema_version: int = 3
     scanned_at: str
-    repo_path: str
+    repo_path: str | None = None
     repo_hash: str
     repo_name: str
     profile: str | None = None

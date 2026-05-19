@@ -25,7 +25,6 @@ def history_file_for_repo(repo_path: Path, history_dir: Path | None = None) -> P
 def build_history_entry(report: ProjectReport) -> ScanHistoryEntry:
     return ScanHistoryEntry(
         scanned_at=datetime.now(UTC).isoformat(timespec="seconds"),
-        repo_path=str(report.summary.path),
         repo_hash=repo_hash(report.summary.path),
         repo_name=report.summary.name,
         profile=report.summary.profile,
@@ -49,7 +48,7 @@ def write_history_entry(report: ProjectReport, history_dir: Path | None = None) 
     path = history_file_for_repo(report.summary.path, history_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry.model_dump(mode="json"), sort_keys=True))
+        handle.write(json.dumps(entry.model_dump(mode="json", exclude_none=True), sort_keys=True))
         handle.write("\n")
     return path
 

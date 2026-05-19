@@ -2,9 +2,9 @@
 
 Phase 2 starts with deeper local analysis while preserving the Phase 1 safety model for scanned repositories.
 
-## Approved Phase 2 Slice
+## Implemented Phase 2 Slice
 
-The first approved slices are richer documentation quality review and local scan history.
+The first approved slices, richer documentation quality review and local scan history, are implemented.
 
 This slice may:
 
@@ -160,9 +160,26 @@ The docs scanner should report:
 
 These still require explicit approval before implementation:
 
-- local scan history storage
 - dependency freshness checks
 - GitHub issue or pull request creation
 - AI-assisted summaries
 - dashboard UI
 - auto-fix commands
+
+## Production-Readiness Review
+
+`git-project-doctor` should not be treated as production-ready until these gates are satisfied:
+
+- GitHub Actions is green on the exact commit being released.
+- Wheel and sdist builds install cleanly and expose `project-doctor --help`.
+- The typed-package marker is included in built distributions.
+- Public documentation matches the shipped CLI behavior.
+- Generated reports never include unredacted possible secret values.
+- Default scans do not write into the target repository.
+- Future-phase features that modify repositories, call APIs, or create GitHub resources remain behind explicit approval.
+
+Remaining phase work before a production-ready release:
+
+- Phase 2 stabilization: keep documentation scoring, TODO classification, possible-secret classification, local history, and repo-specific config covered by tests while reducing false positives from real repositories.
+- Release operations: publish a GitHub Release for the release tag after the pushed commit passes CI.
+- Phase 3 candidates: only after approval, evaluate dependency freshness checks, GitHub issue/PR creation, AI-assisted summaries, dashboard UI, and auto-fix behavior behind separate safety reviews.

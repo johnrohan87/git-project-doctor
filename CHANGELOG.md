@@ -4,6 +4,18 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+- Added a production-readiness review of remaining phase gates.
+- Added the `py.typed` package marker to match the typed-package classifier.
+- Clarified local scan history documentation now that summary-only history is implemented.
+
+## 0.2.2 - 2026-05-17
+
+- Added release-readiness hardening for packaging, license metadata, CI packaging checks, and grouped report summaries.
+- Reduced additional possible-secret false positives for token-like source syntax and UI text.
+- Added stronger markdown and JSON reporter coverage for large finding sets.
+
+## 0.2.1 - 2026-05-17
+
 - Added a public-content guard test to catch customer-specific notes before release.
 - Added grouped TODO and possible-secret summary output for large scan reports.
 - Reduced possible-secret false positives for token-handling source expressions, comments, JSX labels, and console log messages.

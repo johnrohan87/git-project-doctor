@@ -68,7 +68,7 @@ Use `--out PATH` to choose a different report directory. If that path is inside 
 - No Git write operations
 - No repository modifications
 - No AI API calls
-- No database or scan history
+- No database storage
 - No web dashboard
 
 ## Task Packets
@@ -160,5 +160,5 @@ Future phases require explicit approval before implementation:
 - Test runner detection
 - AI-assisted repo summary
 - React dashboard
-- SQLite scan history
+- SQLite or other database-backed scan history
 - Safe autofix mode

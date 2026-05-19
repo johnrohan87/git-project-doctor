@@ -4,6 +4,8 @@ All notable changes to `git-project-doctor` will be documented in this file.
 
 ## Unreleased
 
+## 0.2.3 - 2026-05-19
+
 - Added a production-readiness review of remaining phase gates.
 - Added the `py.typed` package marker to match the typed-package classifier.
 - Clarified local scan history documentation now that summary-only history is implemented.
